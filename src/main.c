@@ -100,7 +100,10 @@ static bool button_pressed(bool *prev_pressed) {
 // Connect Wi-Fi, fetch NTP time, and set the RTC. Returns true on success.
 static bool sync_time_from_ntp(void) {
     time_t epoch;
-    if (!ntp_sync(&epoch, 10000)) {
+    // Short timeout: pool.ntp.org rotates servers and some don't answer, so
+    // it's better to give up quickly and let the caller retry (which re-resolves
+    // to a different server) than to stall 10s on a dead one.
+    if (!ntp_sync(&epoch, 4000)) {
         printf("NTP sync failed\n");
         return false;
     }
@@ -197,7 +200,7 @@ int main(void) {
         if (absolute_time_diff_us(get_absolute_time(), next_resync) <= 0) {
             bool ok = sync_time_from_ntp();
             next_resync = make_timeout_time_ms(
-                ok ? (uint32_t)NTP_RESYNC_HOURS * 3600 * 1000 : 15 * 1000);
+                ok ? (uint32_t)NTP_RESYNC_HOURS * 3600 * 1000 : 5 * 1000);
         }
 
         // Heartbeat: periodic status on the serial console (~3s).
