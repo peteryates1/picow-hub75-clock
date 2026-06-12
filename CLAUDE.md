@@ -173,9 +173,26 @@ runs at the fixed `DEFAULT_BRIGHTNESS` with no light sensing.
 
 ### Rendering
 
-`font.h` is a 5×7 bitmap font containing only digits 0–9 and `:`. `main.c`
-draws `HH:MM` centred, blinking the colon at 1 Hz. The whole frame is cleared
-and redrawn each 200 ms tick on core0.
+`font.h` is a 5×7 bitmap font (digits, A–Z, `:`, space, and `~` = degree),
+looked up by character via `font_glyph()`. `main.c` has scalable text drawing
+(`draw_char`/`draw_text`, each font pixel expanded to a `scale`×`scale` block)
+and `draw_clock_face()` lays out: large (scale-2) `HH:MM` top-left with a 1 Hz
+blinking colon, the outside temperature top-right (amber, right-aligned), and
+`WDAY DD MON` (e.g. `MON 12 JUN`) centred on the bottom half. The frame is
+cleared and redrawn each 200 ms tick on core0; until the clock is set it shows
+the bring-up test pattern instead.
+
+### Weather (outside temperature)
+
+`weather.c` fetches the temperature from **wttr.in over plain HTTP** (lwIP raw
+TCP, no TLS) — `GET /<WEATHER_LOCATION>?format=%t`. Two non-obvious details: the
+`User-Agent` must look like curl or wttr.in returns HTML instead of the plain
+`+18°C` text, and the body may be chunked, so the parser just scans for the
+first signed integer (skipping any chunk-size digits). `WEATHER_LOCATION` is a
+build define (`-DWEATHER_LOCATION=Fleckney`, single token, no spaces). The main
+loop refreshes every `WEATHER_UPDATE_MINUTES`, retrying sooner on failure; the
+result is stored in `g_temp` (with `~` for the degree glyph). Like NTP, the
+fetch blocks core0 briefly but core1 keeps the panel refreshing.
 
 ## lwIP configuration
 

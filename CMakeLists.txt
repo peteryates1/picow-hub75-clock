@@ -20,6 +20,7 @@ add_executable(${PROJECT_NAME}
     src/hub75.c
     src/ldr.c
     src/ntp.c
+    src/weather.c
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -61,6 +62,12 @@ if (TZ_DST_UK)
 elseif (DEFINED TZ_OFFSET_SECONDS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE TZ_OFFSET_SECONDS=${TZ_OFFSET_SECONDS})
     message(STATUS "TZ_OFFSET_SECONDS: ${TZ_OFFSET_SECONDS}")
+endif ()
+
+# Outside-temperature location for wttr.in. e.g. -DWEATHER_LOCATION=Fleckney
+if (DEFINED WEATHER_LOCATION)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE WEATHER_LOCATION=\"${WEATHER_LOCATION}\")
+    message(STATUS "Weather location: ${WEATHER_LOCATION}")
 endif ()
 
 # Select the target hardware. Default is the real clock board; pass

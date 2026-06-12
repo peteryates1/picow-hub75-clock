@@ -32,4 +32,13 @@
 #define NTP_SERVER       "pool.ntp.org"
 #define NTP_RESYNC_HOURS 6   // periodic re-sync interval
 
+// --- Weather (outside temperature via wttr.in) -----------------------------
+// Location passed to wttr.in (a single token; no spaces). Override at configure
+// time with -DWEATHER_LOCATION=Town.
+#ifndef WEATHER_LOCATION
+#define WEATHER_LOCATION "London"
+#endif
+
+#define WEATHER_UPDATE_MINUTES 15   // how often to refresh the temperature
+
 #endif // CONFIG_H

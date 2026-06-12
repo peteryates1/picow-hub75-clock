@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
 #include "pico/stdlib.h"
@@ -10,40 +11,93 @@
 #include "hub75.h"
 #include "ldr.h"
 #include "ntp.h"
+#include "weather.h"
 #include "font.h"
 
-// Digit colour (full-scale; the LDR brightness control dims the whole panel).
-#define CLK_R 0
-#define CLK_G 180
-#define CLK_B 255
+// Colours (full-scale; the LDR/brightness control dims the whole panel).
+#define TIME_R 0
+#define TIME_G 180
+#define TIME_B 255   // cyan time
+#define DATE_R 170
+#define DATE_G 170
+#define DATE_B 170   // soft white day/date
+#define TEMP_R 255
+#define TEMP_G 140
+#define TEMP_B 0     // amber temperature
 
-// Draw one 5x7 glyph at (x,y) in the given colour. `glyph` indexes FONT[].
-static void draw_glyph(int x, int y, int glyph, uint8_t r, uint8_t g, uint8_t b) {
-    for (int row = 0; row < FONT_H; row++) {
-        uint8_t bits = FONT[glyph][row];
-        for (int col = 0; col < FONT_W; col++) {
-            if (bits & (1u << (FONT_W - 1 - col)))
-                hub75_set_pixel(x + col, y + row, r, g, b);
+static const char *const WDAY[7]   = {"SUN","MON","TUE","WED","THU","FRI","SAT"};
+static const char *const MONTH[12] = {"JAN","FEB","MAR","APR","MAY","JUN",
+                                      "JUL","AUG","SEP","OCT","NOV","DEC"};
+
+// Latest outside temperature as a printable string; '~' renders as the degree
+// glyph. "--~" until the first weather fetch lands (wired up separately).
+static char g_temp[12] = "--~";
+
+// Draw one 5x7 character at (x,y) with each pixel expanded to scale x scale.
+static void draw_char(int x, int y, char c, int scale,
+                      uint8_t r, uint8_t g, uint8_t b) {
+    const uint8_t *rows = font_glyph(c);
+    for (int ry = 0; ry < FONT_H; ry++) {
+        uint8_t bits = rows[ry];
+        for (int rx = 0; rx < FONT_W; rx++) {
+            if (!(bits & (1u << (FONT_W - 1 - rx)))) continue;
+            for (int dy = 0; dy < scale; dy++)
+                for (int dx = 0; dx < scale; dx++)
+                    hub75_set_pixel(x + rx * scale + dx, y + ry * scale + dy, r, g, b);
         }
     }
 }
 
-// Render HH:MM centred on the panel. `colon_on` blinks the separator.
-static void draw_time(int hh, int mm, bool colon_on) {
+// Draw a string left-to-right; each cell is (FONT_W+1)*scale wide.
+static void draw_text(int x, int y, const char *s, int scale,
+                      uint8_t r, uint8_t g, uint8_t b) {
+    for (; *s; s++) {
+        draw_char(x, y, *s, scale, r, g, b);
+        x += (FONT_W + 1) * scale;
+    }
+}
+
+// Pixel width of a string at the given scale (no trailing inter-char gap).
+static int text_width(const char *s, int scale) {
+    int n = (int)strlen(s);
+    return n > 0 ? n * (FONT_W + 1) * scale - scale : 0;
+}
+
+// Full clock face: large HH:MM top-left, temperature top-right, day+date below.
+static void draw_clock_face(const struct tm *t, bool colon_on) {
     hub75_clear();
 
-    // Layout: D D : D D. Digits 5px + 1px gap; colon 3px wide.
-    // Total = 5+1+5+1+3+1+5+1+5 = 27px, centred on a 64px panel.
-    const int y = (PANEL_HEIGHT - FONT_H) / 2;
-    int x = (PANEL_WIDTH - 27) / 2;
+    // Time: scale 2 (10x14 digits), top-left.
+    const int s = 2, dw = FONT_W * s, ty = 1;
+    int x = 0;
+    draw_char(x, ty, '0' + t->tm_hour / 10, s, TIME_R, TIME_G, TIME_B); x += dw + 1;
+    draw_char(x, ty, '0' + t->tm_hour % 10, s, TIME_R, TIME_G, TIME_B); x += dw + 1;
+    if (colon_on) {                       // narrow colon: two scale x scale dots
+        for (int dy = 0; dy < s; dy++)
+            for (int dx = 0; dx < s; dx++) {
+                hub75_set_pixel(x + dx, ty + 4 + dy, TIME_R, TIME_G, TIME_B);
+                hub75_set_pixel(x + dx, ty + 9 + dy, TIME_R, TIME_G, TIME_B);
+            }
+    }
+    x += s + 2;                           // colon advance (~4px)
+    draw_char(x, ty, '0' + t->tm_min / 10, s, TIME_R, TIME_G, TIME_B); x += dw + 1;
+    draw_char(x, ty, '0' + t->tm_min % 10, s, TIME_R, TIME_G, TIME_B);
 
-    draw_glyph(x, y, hh / 10, CLK_R, CLK_G, CLK_B); x += 6;
-    draw_glyph(x, y, hh % 10, CLK_R, CLK_G, CLK_B); x += 6;
-    if (colon_on)
-        draw_glyph(x, y, FONT_COLON, CLK_R, CLK_G, CLK_B);
-    x += 4;
-    draw_glyph(x, y, mm / 10, CLK_R, CLK_G, CLK_B); x += 6;
-    draw_glyph(x, y, mm % 10, CLK_R, CLK_G, CLK_B);
+    // Temperature: scale 1, top-right, right-aligned but kept clear of the time.
+    int tw = text_width(g_temp, 1);
+    int tx = PANEL_WIDTH - tw;
+    if (tx < 48) tx = 48;
+    draw_text(tx, 0, g_temp, 1, TEMP_R, TEMP_G, TEMP_B);
+
+    // Day + date: scale 1, centred on the bottom half. e.g. "MON 12 JUN".
+    char date[16];
+    snprintf(date, sizeof date, "%s %d %s",
+             WDAY[t->tm_wday], t->tm_mday, MONTH[t->tm_mon]);
+    int dwid = text_width(date, 1);
+    int dx = (PANEL_WIDTH - dwid) / 2;
+    if (dx < 0) dx = 0;
+    int dy = PANEL_SCAN_ROWS + (PANEL_SCAN_ROWS - FONT_H) / 2;
+    draw_text(dx, dy, date, 1, DATE_R, DATE_G, DATE_B);
 }
 
 static void draw_block(int x0, int y0, uint8_t r, uint8_t g, uint8_t b) {
@@ -194,6 +248,7 @@ int main(void) {
     // associating, before DHCP/DNS settle) is retried quickly rather than
     // waiting a full re-sync interval.
     absolute_time_t next_resync = get_absolute_time();
+    absolute_time_t next_weather = make_timeout_time_ms(3000);  // shortly after boot
 #if HAS_BUTTON
     bool button_prev = false;
 #endif
@@ -224,7 +279,7 @@ int main(void) {
             struct tm t;
             gmtime_r(&local, &t);
             bool colon_on = (t.tm_sec & 1) == 0;  // 1 Hz blink
-            draw_time(t.tm_hour, t.tm_min, colon_on);
+            draw_clock_face(&t, colon_on);
         } else {
             draw_test_pattern();
         }
@@ -235,6 +290,21 @@ int main(void) {
             bool ok = sync_time_from_ntp();
             next_resync = make_timeout_time_ms(
                 ok ? (uint32_t)NTP_RESYNC_HOURS * 3600 * 1000 : 5 * 1000);
+        }
+
+        // Outside temperature from wttr.in: refresh periodically, retry sooner
+        // on failure. core1 keeps refreshing the panel while this blocks.
+        if (absolute_time_diff_us(get_absolute_time(), next_weather) <= 0) {
+            int celsius;
+            if (weather_fetch_temp(&celsius, 8000)) {
+                snprintf(g_temp, sizeof g_temp, "%d~", celsius);
+                printf("Weather: %d C\n", celsius);
+                next_weather = make_timeout_time_ms(
+                    (uint32_t)WEATHER_UPDATE_MINUTES * 60 * 1000);
+            } else {
+                printf("Weather fetch failed\n");
+                next_weather = make_timeout_time_ms(60 * 1000);
+            }
         }
 
         // Heartbeat: periodic status on the serial console (~3s).
