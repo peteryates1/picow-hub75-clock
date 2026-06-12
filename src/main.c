@@ -46,6 +46,29 @@ static void draw_time(int hh, int mm, bool colon_on) {
     draw_glyph(x, y, mm % 10, CLK_R, CLK_G, CLK_B);
 }
 
+static void draw_block(int x0, int y0, uint8_t r, uint8_t g, uint8_t b) {
+    for (int y = y0; y < y0 + 6; y++)
+        for (int x = x0; x < x0 + 10; x++)
+            hub75_set_pixel(x, y, r, g, b);
+}
+
+// HUB75 colour-mapping test: six small blocks (low current). Each drives one
+// channel; the colour shown reveals the real wiring.
+//   top row    blocks drive R / G / B  -> exercises R1 / G1 / B1
+//   bottom row blocks drive R / G / B  -> exercises R2 / G2 / B2
+// Read the six colours: top L/M/R, then bottom L/M/R.
+static void draw_test_pattern(void) {
+    hub75_clear();
+    // Top half (rows < 16): R1, G1, B1
+    draw_block(8,  5, 255, 0,   0);    // drive RED   -> R1
+    draw_block(27, 5, 0,   255, 0);    // drive GREEN -> G1
+    draw_block(46, 5, 0,   0,   255);  // drive BLUE  -> B1
+    // Bottom half (rows >= 16): R2, G2, B2
+    draw_block(8,  21, 255, 0,   0);   // drive RED   -> R2
+    draw_block(27, 21, 0,   255, 0);   // drive GREEN -> G2
+    draw_block(46, 21, 0,   0,   255); // drive BLUE  -> B2
+}
+
 // Set the on-chip always-on timer (RTC) from a UTC epoch.
 static void set_clock(time_t utc_epoch) {
     struct timespec ts = { .tv_sec = utc_epoch, .tv_nsec = 0 };
@@ -89,15 +112,21 @@ static bool sync_time_from_ntp(void) {
 int main(void) {
     stdio_init_all();
 
-    hub75_init();   // launches the refresh loop on core1
-    hub75_set_brightness(DEFAULT_BRIGHTNESS);
-#if HAS_LDR
-    ldr_init();
-#endif
-#if HAS_BUTTON
-    button_init();
+#ifdef DISPLAY_TEST_PATTERN
+    // Bring-up mode: no Wi-Fi at all. Launch core1 and hold the test pattern.
+    hub75_init();
+    hub75_set_brightness(255);
+    for (;;) {
+        draw_test_pattern();
+        sleep_ms(200);
+    }
 #endif
 
+    // Bring up wireless BEFORE launching core1. cyw43_arch_init() touches flash;
+    // a core1 already running the refresh loop out of flash gets knocked back
+    // into the bootrom by that (observed: core1 dies after ~16 frames, PC back
+    // in ROM). Initialising wireless first avoids the race; core1 also registers
+    // as a flash lockout victim (see hub75_init) to stay safe afterwards.
     if (cyw43_arch_init()) {
         printf("cyw43 init failed\n");
         return 1;
@@ -111,11 +140,23 @@ int main(void) {
         // Keep running: the display works, the time is just unset.
     } else {
         printf("Wi-Fi connected\n");
-        sync_time_from_ntp();
     }
 
-    absolute_time_t next_resync =
-        make_timeout_time_ms((uint32_t)NTP_RESYNC_HOURS * 3600 * 1000);
+    // Now safe to launch the display refresh on core1.
+    hub75_init();
+    hub75_set_brightness(DEFAULT_BRIGHTNESS);
+#if HAS_LDR
+    ldr_init();
+#endif
+#if HAS_BUTTON
+    button_init();
+#endif
+
+    // Fire the first NTP sync on the first loop iteration. The loop handles
+    // success/retry uniformly, so a failed boot sync (common right after
+    // associating, before DHCP/DNS settle) is retried quickly rather than
+    // waiting a full re-sync interval.
+    absolute_time_t next_resync = get_absolute_time();
 #if HAS_BUTTON
     bool button_prev = false;
 #endif
@@ -137,7 +178,8 @@ int main(void) {
         }
 #endif
 
-        // Read local time and draw it.
+        // Draw the time once the clock is set; until then show the bring-up
+        // test pattern so the panel is never blank.
         struct timespec ts;
         if (aon_timer_is_running()) {
             aon_timer_get_time(&ts);
@@ -146,30 +188,34 @@ int main(void) {
             gmtime_r(&local, &t);
             bool colon_on = (t.tm_sec & 1) == 0;  // 1 Hz blink
             draw_time(t.tm_hour, t.tm_min, colon_on);
+        } else {
+            draw_test_pattern();
         }
 
-        // Periodic re-sync to correct RTC drift.
+        // NTP sync: full interval once the clock is set, quick retry until it
+        // is (and to recover from a dropped network).
         if (absolute_time_diff_us(get_absolute_time(), next_resync) <= 0) {
-            if (sync_time_from_ntp())
-                next_resync = make_timeout_time_ms(
-                    (uint32_t)NTP_RESYNC_HOURS * 3600 * 1000);
-            else
-                next_resync = make_timeout_time_ms(60 * 1000);  // retry soon
+            bool ok = sync_time_from_ntp();
+            next_resync = make_timeout_time_ms(
+                ok ? (uint32_t)NTP_RESYNC_HOURS * 3600 * 1000 : 15 * 1000);
         }
 
         // Heartbeat: periodic status on the serial console (~3s).
         if (++ticks % 15 == 0) {
             int link = cyw43_wifi_link_status(&cyw43_state, CYW43_ITF_STA);
+            int core1 = hub75_core1_alive();
+            unsigned frames = hub75_frame_count();
             if (aon_timer_is_running()) {
                 struct timespec hts;
                 aon_timer_get_time(&hts);
                 time_t local = hts.tv_sec + TZ_OFFSET_SECONDS;
                 struct tm t;
                 gmtime_r(&local, &t);
-                printf("[hb] wifi_link=%d  time=%02d:%02d:%02d\n",
-                       link, t.tm_hour, t.tm_min, t.tm_sec);
+                printf("[hb] core1=%d frames=%u wifi_link=%d time=%02d:%02d:%02d\n",
+                       core1, frames, link, t.tm_hour, t.tm_min, t.tm_sec);
             } else {
-                printf("[hb] wifi_link=%d  time=unset\n", link);
+                printf("[hb] core1=%d frames=%u wifi_link=%d time=unset\n",
+                       core1, frames, link);
             }
         }
 

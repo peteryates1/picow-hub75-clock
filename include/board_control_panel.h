@@ -51,6 +51,6 @@
 #define HAS_BUTTON  0
 
 // Fixed brightness used when there is no light sensor.
-#define DEFAULT_BRIGHTNESS  60
+#define DEFAULT_BRIGHTNESS  160
 
 #endif // BOARD_CONTROL_PANEL_H

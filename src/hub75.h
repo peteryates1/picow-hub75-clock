@@ -2,6 +2,7 @@
 #define HUB75_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "config.h"
 
 // ---------------------------------------------------------------------------
@@ -28,5 +29,10 @@ void hub75_clear(void);
 // Global brightness, 0 (off) .. 255 (full). Applied by the refresh loop, so
 // it affects everything already on screen without redrawing.
 void hub75_set_brightness(uint8_t brightness);
+
+// Liveness instrumentation: true once core1 has entered the refresh loop, and a
+// counter that increments every full frame. Lets core0 confirm core1 is alive.
+bool hub75_core1_alive(void);
+uint32_t hub75_frame_count(void);
 
 #endif // HUB75_H

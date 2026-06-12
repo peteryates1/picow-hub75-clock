@@ -52,6 +52,12 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
 )
 
+# Local time offset from UTC in seconds (no DST). e.g. -DTZ_OFFSET_SECONDS=3600.
+if (DEFINED TZ_OFFSET_SECONDS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE TZ_OFFSET_SECONDS=${TZ_OFFSET_SECONDS})
+    message(STATUS "TZ_OFFSET_SECONDS: ${TZ_OFFSET_SECONDS}")
+endif ()
+
 # Select the target hardware. Default is the real clock board; pass
 # -DTARGET_BOARD=control_panel to build for the alternative test board.
 # Pin maps live in include/board_*.h, dispatched by include/config.h.
@@ -60,6 +66,13 @@ if (TARGET_BOARD STREQUAL "control_panel")
     message(STATUS "Target board: control_panel")
 else ()
     message(STATUS "Target board: clock (default)")
+endif ()
+
+# Bring-up diagnostic: -DDISPLAY_TEST_PATTERN=ON forces a full-screen HUB75
+# test pattern at full brightness and ignores Wi-Fi/NTP/clock.
+if (DISPLAY_TEST_PATTERN)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE DISPLAY_TEST_PATTERN)
+    message(STATUS "DISPLAY_TEST_PATTERN: ON")
 endif ()
 
 target_link_libraries(${PROJECT_NAME}

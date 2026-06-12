@@ -1,6 +1,7 @@
 #include "ntp.h"
 #include "config.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #include "pico/stdlib.h"
@@ -58,8 +59,10 @@ static void ntp_dns_found(const char *name, const ip_addr_t *addr, void *arg) {
     ntp_ctx_t *ctx = (ntp_ctx_t *)arg;
     if (addr) {
         ctx->server_addr = *addr;
+        printf("NTP: DNS resolved %s -> %s\n", name, ipaddr_ntoa(addr));
         ntp_send_request(ctx);
     } else {
+        printf("NTP: DNS resolution failed for %s\n", name);
         ctx->ok = false;
         ctx->done = true;
     }
@@ -94,6 +97,12 @@ bool ntp_sync(time_t *out_epoch, uint32_t timeout_ms) {
         cyw43_arch_poll();
         sleep_ms(5);
     }
+
+    if (!ctx.done)
+        printf("NTP: timed out waiting for reply (no packet in %lu ms)\n",
+               (unsigned long)timeout_ms);
+    else if (!ctx.ok)
+        printf("NTP: reply received but rejected (bad mode/stratum)\n");
 
     cyw43_arch_lwip_begin();
     udp_remove(ctx.pcb);

@@ -13,6 +13,14 @@
 // plane. Plane p is lit for (BCM_BASE_US << p), giving the binary weighting.
 #define BCM_BASE_US      8
 
+// Short delay (~tens of ns) inserted around the CLK/LAT edges so the panel's
+// shift registers see valid data-setup and clock-high times. Without it the
+// bit-banged pulses can be too short for the panel to register. Tunable.
+#ifndef HUB75_DELAY_CYCLES
+#define HUB75_DELAY_CYCLES 8
+#endif
+#define HUB75_DELAY() busy_wait_at_least_cycles(HUB75_DELAY_CYCLES)
+
 // Framebuffer: full 8-bit RGB per pixel. Written by core0, read by core1.
 // Plain memory with no lock: a pixel may tear for one frame during an update,
 // which is invisible for a clock. Marked volatile so the compiler reloads it.
@@ -20,6 +28,13 @@ static volatile uint8_t fb[PANEL_HEIGHT][PANEL_WIDTH][3];
 
 // Global brightness scales the BCM on-time. Single byte, atomic to update.
 static volatile uint8_t g_brightness = 255;
+
+// Liveness instrumentation, written by core1, read by core0.
+static volatile bool     g_core1_alive = false;
+static volatile uint32_t g_frame_count = 0;
+
+bool hub75_core1_alive(void) { return g_core1_alive; }
+uint32_t hub75_frame_count(void) { return g_frame_count; }
 
 void hub75_set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
     if ((unsigned)x >= PANEL_WIDTH || (unsigned)y >= PANEL_HEIGHT) return;
@@ -79,8 +94,13 @@ static inline uint32_t pack_column(int x, int top_y, int bot_y, int plane) {
 
 static void hub75_refresh_loop(void) {
     hub75_gpio_init();
+    // Register core1 so that any flash-unsafe operation on core0 (e.g. inside
+    // the cyw43 driver) parks core1 safely instead of corrupting its execution.
+    multicore_lockout_victim_init();
+    g_core1_alive = true;
 
     for (;;) {
+        g_frame_count++;
         for (int plane = 0; plane < HUB75_BCM_DEPTH; plane++) {
             // On-time for this plane, scaled by global brightness.
             uint32_t on_us = ((uint32_t)BCM_BASE_US << plane) * g_brightness / 255;
@@ -90,15 +110,21 @@ static void hub75_refresh_loop(void) {
                 for (int x = 0; x < PANEL_WIDTH; x++) {
                     uint32_t bits = pack_column(x, row, row + PANEL_SCAN_ROWS, plane);
                     gpio_put_masked(RGB_PIN_MASK, bits);
+                    HUB75_DELAY();                 // data setup before clock edge
                     gpio_put(PIN_CLK, 1);
+                    HUB75_DELAY();                 // hold clock high
                     gpio_put(PIN_CLK, 0);
+                    HUB75_DELAY();
                 }
 
                 // Blank, latch the shifted row, select it, then light it.
                 gpio_put(PIN_OE, 1);
                 hub75_set_row(row);
+                HUB75_DELAY();
                 gpio_put(PIN_LAT, 1);
+                HUB75_DELAY();
                 gpio_put(PIN_LAT, 0);
+                HUB75_DELAY();
                 gpio_put(PIN_OE, 0);
                 if (on_us) busy_wait_us_32(on_us);
                 gpio_put(PIN_OE, 1);
@@ -108,5 +134,11 @@ static void hub75_refresh_loop(void) {
 }
 
 void hub75_init(void) {
+    // Reset core1 to a clean state before launching. On RP2350 core1 can be
+    // left parked in the bootrom after a reset such that multicore_launch_core1
+    // silently fails to start it (PC stuck in bootrom, garbage SP) and the
+    // refresh loop never runs. An explicit reset first makes the launch
+    // reliable.
+    multicore_reset_core1();
     multicore_launch_core1(hub75_refresh_loop);
 }

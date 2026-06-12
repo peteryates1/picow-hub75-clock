@@ -95,6 +95,27 @@ framebuffer + a brightness byte. Keep this boundary intact.
   tear for a single frame mid-update, which is invisible on a clock. Don't add
   locking unless a real artifact appears — it would stall the refresh loop.
 
+### RP2350 core1 launch order — do not reorder (hard-won)
+
+On the Pico 2 W (RP2350) two things are mandatory or core1's display dies:
+
+1. **Launch core1 *after* `cyw43_arch_init()`.** `cyw43_arch_init()` performs
+   flash-touching work; a core1 already running the refresh loop out of flash
+   gets knocked back into the bootrom by it (symptom: core1 runs ~16 frames,
+   then PC returns to ROM `~0x000000da` with a garbage SP, panel flashes once
+   then goes dark). So `main()` brings up Wi-Fi first, *then* calls
+   `hub75_init()`. The cost is a brief blank panel during the boot Wi-Fi connect.
+2. **`hub75_init()` does `multicore_reset_core1()` before `multicore_launch_core1()`**
+   (core1 otherwise intermittently stays parked in the bootrom after a debugger
+   reset and never starts), and the refresh loop calls
+   **`multicore_lockout_victim_init()`** so later core0 flash operations park
+   core1 safely instead of corrupting it.
+
+The serial heartbeat prints `core1=<alive> frames=<n>`; if `frames` is frozen,
+core1 has died — check this ordering first. Note SWD/debugger resets don't
+reliably reset core1, so after flashing, a **cold power-cycle of the Pico** is
+sometimes needed for core1 to launch; a normal power-on boot is always fine.
+
 ### Display driver details (`hub75.c`)
 
 - 64×32 panel is **1/16 scan**: address lines A–D select one of 16 row-pairs;
