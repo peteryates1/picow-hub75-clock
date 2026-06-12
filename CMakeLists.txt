@@ -52,8 +52,13 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
 )
 
-# Local time offset from UTC in seconds (no DST). e.g. -DTZ_OFFSET_SECONDS=3600.
-if (DEFINED TZ_OFFSET_SECONDS)
+# Timezone. Either a fixed offset (-DTZ_OFFSET_SECONDS=3600), or automatic UK
+# BST/GMT handling (-DTZ_DST_UK=ON), which derives the offset from UTC and needs
+# no fixed offset.
+if (TZ_DST_UK)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE TZ_DST_UK)
+    message(STATUS "Timezone: UK auto BST/GMT")
+elseif (DEFINED TZ_OFFSET_SECONDS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE TZ_OFFSET_SECONDS=${TZ_OFFSET_SECONDS})
     message(STATUS "TZ_OFFSET_SECONDS: ${TZ_OFFSET_SECONDS}")
 endif ()

@@ -69,6 +69,40 @@ static void draw_test_pattern(void) {
     draw_block(46, 21, 0,   0,   255); // drive BLUE  -> B2
 }
 
+// Local-time offset (seconds) from UTC at the given instant.
+//
+// With TZ_DST_UK defined, computes UK time automatically: BST (UTC+1) from
+// 01:00 UTC on the last Sunday of March to 01:00 UTC on the last Sunday of
+// October, GMT (UTC+0) otherwise. Without it, a fixed TZ_OFFSET_SECONDS.
+static int local_offset(time_t utc) {
+#ifdef TZ_DST_UK
+    struct tm t;
+    gmtime_r(&utc, &t);
+    int month = t.tm_mon + 1;   // 1..12
+    bool bst;
+    if (month < 3 || month > 10) {
+        bst = false;                       // Jan, Feb, Nov, Dec -> GMT
+    } else if (month > 3 && month < 10) {
+        bst = true;                        // Apr..Sep -> BST
+    } else {
+        // March or October (both 31 days): find the date of the last Sunday.
+        int last_day = 31;
+        int wday_last = (t.tm_wday + (last_day - t.tm_mday)) % 7;  // 0 = Sunday
+        int last_sunday = last_day - wday_last;
+        if (month == 3)   // BST begins 01:00 UTC on the last Sunday
+            bst = t.tm_mday > last_sunday ||
+                  (t.tm_mday == last_sunday && t.tm_hour >= 1);
+        else              // October: BST ends 01:00 UTC on the last Sunday
+            bst = t.tm_mday < last_sunday ||
+                  (t.tm_mday == last_sunday && t.tm_hour < 1);
+    }
+    return bst ? 3600 : 0;
+#else
+    (void)utc;
+    return TZ_OFFSET_SECONDS;
+#endif
+}
+
 // Set the on-chip always-on timer (RTC) from a UTC epoch.
 static void set_clock(time_t utc_epoch) {
     struct timespec ts = { .tv_sec = utc_epoch, .tv_nsec = 0 };
@@ -186,7 +220,7 @@ int main(void) {
         struct timespec ts;
         if (aon_timer_is_running()) {
             aon_timer_get_time(&ts);
-            time_t local = ts.tv_sec + TZ_OFFSET_SECONDS;
+            time_t local = ts.tv_sec + local_offset(ts.tv_sec);
             struct tm t;
             gmtime_r(&local, &t);
             bool colon_on = (t.tm_sec & 1) == 0;  // 1 Hz blink
@@ -211,7 +245,7 @@ int main(void) {
             if (aon_timer_is_running()) {
                 struct timespec hts;
                 aon_timer_get_time(&hts);
-                time_t local = hts.tv_sec + TZ_OFFSET_SECONDS;
+                time_t local = hts.tv_sec + local_offset(hts.tv_sec);
                 struct tm t;
                 gmtime_r(&local, &t);
                 printf("[hb] core1=%d frames=%u wifi_link=%d time=%02d:%02d:%02d\n",

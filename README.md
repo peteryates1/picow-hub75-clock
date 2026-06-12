@@ -55,7 +55,8 @@ Flash `build/picow_hub75_clock.uf2` by holding BOOTSEL while plugging in the
 Pico W, then copying the file to the `RPI-RP2` mass-storage device. Serial logs
 appear on USB CDC.
 
-Set your timezone with `-DTZ_OFFSET_SECONDS=3600` (no automatic DST).
+Timezone: build with `-DTZ_DST_UK=ON` for automatic UK BST/GMT switching, or
+`-DTZ_OFFSET_SECONDS=3600` for a fixed offset (no DST).
 
 ### Bench testing on a Pico 2 W via debug probe
 

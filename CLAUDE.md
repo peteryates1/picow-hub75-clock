@@ -14,7 +14,7 @@ night). Pure C on the Pico SDK (2.2.0), no RTOS.
 ```sh
 export PICO_SDK_PATH=/home/peter/pico-sdk
 # Clock board (default):
-cmake -B build                                          # optionally -DTZ_OFFSET_SECONDS=3600
+cmake -B build                                          # UK time: -DTZ_DST_UK=ON  (or fixed -DTZ_OFFSET_SECONDS=3600)
 cmake --build build -j4
 # Control-panel test board:
 cmake -B build_cp -DTARGET_BOARD=control_panel
@@ -161,8 +161,10 @@ runs at the fixed `DEFAULT_BRIGHTNESS` with no light sensing.
   `cyw43_arch_poll()`; all lwIP calls are wrapped in
   `cyw43_arch_lwip_begin/end`.
 - The on-chip **AON timer / RTC** (`pico/aon_timer.h`) holds wall-clock time
-  (UTC). `TZ_OFFSET_SECONDS` is added only at render time — there is **no DST
-  handling**. Re-sync runs every `NTP_RESYNC_HOURS`, or on demand when **SW1
+  (UTC). The local offset is applied only at render time by `local_offset()`:
+  either a fixed `TZ_OFFSET_SECONDS`, or — with `-DTZ_DST_UK=ON` — automatic UK
+  BST/GMT (BST = UTC+1 from 01:00 UTC last Sunday of March to 01:00 UTC last
+  Sunday of October). Re-sync runs every `NTP_RESYNC_HOURS`, or on demand when **SW1
   (GP16)** is pressed — the button's only job is to force an NTP re-sync.
   It's active-low with the internal pull-up; `button_pressed()` does falling-edge
   detection debounced against the 200 ms loop tick.
