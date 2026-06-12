@@ -1,0 +1,112 @@
+#include "hub75.h"
+
+#include "pico/multicore.h"
+#include "pico/stdlib.h"
+#include "hardware/gpio.h"
+
+// Colour depth used for Binary Code Modulation. The top HUB75_BCM_DEPTH bits
+// of each 8-bit channel are displayed. 4 bits (16 levels/channel) is plenty
+// for a clock face and keeps the per-frame work light on a bit-banged driver.
+#define HUB75_BCM_DEPTH  4
+
+// Base time (microseconds) the panel is lit for the least-significant bit
+// plane. Plane p is lit for (BCM_BASE_US << p), giving the binary weighting.
+#define BCM_BASE_US      8
+
+// Framebuffer: full 8-bit RGB per pixel. Written by core0, read by core1.
+// Plain memory with no lock: a pixel may tear for one frame during an update,
+// which is invisible for a clock. Marked volatile so the compiler reloads it.
+static volatile uint8_t fb[PANEL_HEIGHT][PANEL_WIDTH][3];
+
+// Global brightness scales the BCM on-time. Single byte, atomic to update.
+static volatile uint8_t g_brightness = 255;
+
+void hub75_set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+    if ((unsigned)x >= PANEL_WIDTH || (unsigned)y >= PANEL_HEIGHT) return;
+    fb[y][x][0] = r;
+    fb[y][x][1] = g;
+    fb[y][x][2] = b;
+}
+
+void hub75_clear(void) {
+    for (int y = 0; y < PANEL_HEIGHT; y++)
+        for (int x = 0; x < PANEL_WIDTH; x++)
+            fb[y][x][0] = fb[y][x][1] = fb[y][x][2] = 0;
+}
+
+void hub75_set_brightness(uint8_t brightness) {
+    g_brightness = brightness;
+}
+
+// --- core1: GPIO setup + refresh loop --------------------------------------
+
+static void hub75_gpio_init(void) {
+    const uint pins[] = {
+        PIN_B2, PIN_R2, PIN_B1, PIN_R1, PIN_G1, PIN_G2,
+        PIN_ADDR_A, PIN_ADDR_B, PIN_ADDR_C, PIN_ADDR_D, PIN_ADDR_E,
+        PIN_CLK, PIN_LAT, PIN_OE,
+    };
+    for (size_t i = 0; i < count_of(pins); i++) {
+        gpio_init(pins[i]);
+        gpio_set_dir(pins[i], GPIO_OUT);
+        gpio_put(pins[i], 0);
+    }
+    gpio_put(PIN_OE, 1);  // OE active-low: start with the panel blanked.
+}
+
+// Drive the row-address lines A..D to select one of the 16 row-pairs.
+static inline void hub75_set_row(int row) {
+    gpio_put(PIN_ADDR_A, row & 0x1);
+    gpio_put(PIN_ADDR_B, row & 0x2);
+    gpio_put(PIN_ADDR_C, row & 0x4);
+    gpio_put(PIN_ADDR_D, row & 0x8);
+}
+
+// Pack the six RGB bits for a column (top + bottom pixel) into the GPIO
+// positions of the GP10..GP15 block, ready for a single masked write.
+static inline uint32_t pack_column(int x, int top_y, int bot_y, int plane) {
+    const uint8_t bit = (uint8_t)(8 - HUB75_BCM_DEPTH + plane);  // which source bit
+    const uint8_t m = 1u << bit;
+    uint32_t v = 0;
+    if (fb[top_y][x][0] & m) v |= 1u << RGB_BIT_R1;
+    if (fb[top_y][x][1] & m) v |= 1u << RGB_BIT_G1;
+    if (fb[top_y][x][2] & m) v |= 1u << RGB_BIT_B1;
+    if (fb[bot_y][x][0] & m) v |= 1u << RGB_BIT_R2;
+    if (fb[bot_y][x][1] & m) v |= 1u << RGB_BIT_G2;
+    if (fb[bot_y][x][2] & m) v |= 1u << RGB_BIT_B2;
+    return v << RGB_BASE_PIN;
+}
+
+static void hub75_refresh_loop(void) {
+    hub75_gpio_init();
+
+    for (;;) {
+        for (int plane = 0; plane < HUB75_BCM_DEPTH; plane++) {
+            // On-time for this plane, scaled by global brightness.
+            uint32_t on_us = ((uint32_t)BCM_BASE_US << plane) * g_brightness / 255;
+
+            for (int row = 0; row < PANEL_SCAN_ROWS; row++) {
+                // Shift out all 64 columns for this row-pair.
+                for (int x = 0; x < PANEL_WIDTH; x++) {
+                    uint32_t bits = pack_column(x, row, row + PANEL_SCAN_ROWS, plane);
+                    gpio_put_masked(RGB_PIN_MASK, bits);
+                    gpio_put(PIN_CLK, 1);
+                    gpio_put(PIN_CLK, 0);
+                }
+
+                // Blank, latch the shifted row, select it, then light it.
+                gpio_put(PIN_OE, 1);
+                hub75_set_row(row);
+                gpio_put(PIN_LAT, 1);
+                gpio_put(PIN_LAT, 0);
+                gpio_put(PIN_OE, 0);
+                if (on_us) busy_wait_us_32(on_us);
+                gpio_put(PIN_OE, 1);
+            }
+        }
+    }
+}
+
+void hub75_init(void) {
+    multicore_launch_core1(hub75_refresh_loop);
+}

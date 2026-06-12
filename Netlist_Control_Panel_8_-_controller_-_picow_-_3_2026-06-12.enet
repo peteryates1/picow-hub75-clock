@@ -1,0 +1,2380 @@
+{
+    "version": "2.0.0",
+    "components": {
+        "gge60d8d39eb8e8b285": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "DSN-MINI-360",
+                "Designator": "M1",
+                "Symbol": "deebcf8b7c7659c1",
+                "Device": "ff39f53402a3f08a",
+                "Footprint": "093388a99cbe07a4",
+                "Unique ID": "gge60d8d39eb8e8b285",
+                "Description": "",
+                "Origin 3D Model Title": "mini360",
+                "3D Model Transform": "432.808,669.29,0,90,0,0,0,0.001,-157.48",
+                "Group ID": "",
+                "Channel ID": "$2e16",
+                "Reuse Block": "",
+                "DeviceName": "DSN-MINI-360",
+                "FootprintName": "DSN-MINI-360"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "+IN",
+                    "number": "1",
+                    "net": "+V",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "GND",
+                    "number": "2",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "OUT+",
+                    "number": "3",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                },
+                "4": {
+                    "name": "GND",
+                    "number": "4",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "4"
+                    }
+                }
+            }
+        },
+        "gge538a1d4aeb0aaa0d": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "1u",
+                "Designator": "C2",
+                "Symbol": "1be07761567207c6",
+                "Device": "f589c3b7a8ed831b",
+                "Footprint": "54d616aeae33209b",
+                "Unique ID": "gge538a1d4aeb0aaa0d",
+                "Description": "",
+                "Origin 3D Model Title": "CAP-D5.0×H7.0×F2.0",
+                "3D Model Transform": "197.091,196.65457,0,180,0,180,0,0,275.591",
+                "Group ID": "",
+                "Channel ID": "$2e24",
+                "Reuse Block": "",
+                "DeviceName": "1u",
+                "FootprintName": "CAP-D5.0×F2.0"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                }
+            }
+        },
+        "gge19df4b467dcd0c4a": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "LED-0805_R",
+                "Designator": "LED1",
+                "Symbol": "114061c68774bc6f",
+                "Device": "186774592318b110",
+                "Footprint": "840d5114b71a38b1",
+                "Manufacturer": "EVERLIGHT(台湾亿光)",
+                "Manufacturer Part": "17-21SURC/S530-A3/TR8",
+                "Supplier Part": "C72037",
+                "Unique ID": "gge19df4b467dcd0c4a",
+                "Description": "",
+                "Origin 3D Model Title": "LED0805_Red",
+                "3D Model Transform": "102.362,64.488,0,180,0,0,5.908,0,0",
+                "Group ID": "",
+                "Channel ID": "$2e32",
+                "Reuse Block": "",
+                "DeviceName": "17-21SURC/S530-A3/TR8",
+                "FootprintName": "LED0805_RED"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "$2N104",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                }
+            }
+        },
+        "gge2160a8ae262dc5d1": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "1k",
+                "Designator": "R1",
+                "Symbol": "9adb4615bab3e7e5",
+                "Device": "5aa26eb979009c8b",
+                "Footprint": "b6a370204b09708a",
+                "Unique ID": "gge2160a8ae262dc5d1",
+                "Description": "",
+                "Origin 3D Model Title": "R0603",
+                "3D Model Transform": "31.8897,63.7794,0,90,0,0,0,0,0",
+                "Group ID": "",
+                "Channel ID": "$2e43",
+                "Reuse Block": "",
+                "DeviceName": "1k",
+                "FootprintName": "R0603"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "$2N104",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                }
+            }
+        },
+        "gge71640c0891e36b79": {
+            "props": {
+                "Add into BOM": "no",
+                "Convert to PCB": "yes",
+                "Name": "HDR-M-2.54_1x6",
+                "Designator": "J4",
+                "Symbol": "bc0268f165c07daa",
+                "Device": "5e9c3aef944c76f7",
+                "Footprint": "6f3d185220f7d357",
+                "Supplier Part": "C190819",
+                "Supplier": "LCSC",
+                "Unique ID": "gge71640c0891e36b79",
+                "Description": "",
+                "Origin 3D Model Title": "HDR-M-2.54_1x6",
+                "3D Model Transform": "599.999,100,0,0,0,0,0,0,-118.11",
+                "Group ID": "",
+                "Channel ID": "$2e51",
+                "Reuse Block": "",
+                "DeviceName": "HDR-M-2.54_1x6",
+                "FootprintName": "HDR-M-2.54_1X6"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "nRESET",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "3",
+                    "number": "3",
+                    "net": "nINT",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                },
+                "4": {
+                    "name": "4",
+                    "number": "4",
+                    "net": "SCL0",
+                    "props": {
+                        "Pin Number": "4"
+                    }
+                },
+                "5": {
+                    "name": "5",
+                    "number": "5",
+                    "net": "SDA0",
+                    "props": {
+                        "Pin Number": "5"
+                    }
+                },
+                "6": {
+                    "name": "6",
+                    "number": "6",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "6"
+                    }
+                }
+            }
+        },
+        "gge9c021b6bbe693707": {
+            "props": {
+                "Add into BOM": "no",
+                "Convert to PCB": "yes",
+                "Name": "HDR-M-2.54_1x6",
+                "Designator": "J5",
+                "Symbol": "bc0268f165c07daa",
+                "Device": "5e9c3aef944c76f7",
+                "Footprint": "6f3d185220f7d357",
+                "Supplier Part": "C190819",
+                "Supplier": "LCSC",
+                "Unique ID": "gge9c021b6bbe693707",
+                "Description": "",
+                "Origin 3D Model Title": "HDR-M-2.54_1x6",
+                "3D Model Transform": "599.999,100,0,0,0,0,0,0,-118.11",
+                "Group ID": "",
+                "Channel ID": "$2e61",
+                "Reuse Block": "",
+                "DeviceName": "HDR-M-2.54_1x6",
+                "FootprintName": "HDR-M-2.54_1X6"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "nRESET",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "3",
+                    "number": "3",
+                    "net": "nINT",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                },
+                "4": {
+                    "name": "4",
+                    "number": "4",
+                    "net": "SCL1",
+                    "props": {
+                        "Pin Number": "4"
+                    }
+                },
+                "5": {
+                    "name": "5",
+                    "number": "5",
+                    "net": "SDA1",
+                    "props": {
+                        "Pin Number": "5"
+                    }
+                },
+                "6": {
+                    "name": "6",
+                    "number": "6",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "6"
+                    }
+                }
+            }
+        },
+        "gge1d883be39d737ced": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "DMG2305UX-13",
+                "Designator": "Q1",
+                "Symbol": "3a70f6137ec43b58",
+                "Device": "2a97493636b6d8e4",
+                "Footprint": "3c1de87666fa1f98",
+                "Supplier": "LCSC",
+                "Manufacturer": "DIODES(美台)",
+                "Manufacturer Part": "DMG2305UX-13",
+                "Supplier Part": "C144153",
+                "JLCPCB Part Class": "Extended Part",
+                "link": "https://lcsc.com/eda_search?q=C144153&%26type=1&ref=editor",
+                "Unique ID": "gge1d883be39d737ced",
+                "Description": "",
+                "Origin 3D Model Title": "SOT-23-3P_L2.9-W1.3-H1.0-LS2.4-P0.95",
+                "3D Model Transform": "98.425,114.173,0,180,0,0,0.001,-0.001,0",
+                "Group ID": "",
+                "Channel ID": "$2e76",
+                "Reuse Block": "",
+                "DeviceName": "DMG2305UX-13",
+                "FootprintName": "SOT-23-3_L2.9-W1.3-P1.90-LS2.4-BR"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "G",
+                    "number": "1",
+                    "net": "$2N40",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "S",
+                    "number": "2",
+                    "net": "$2N21",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "D",
+                    "number": "3",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                }
+            }
+        },
+        "gge7e5483cf393a0140": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "DSS16UTR",
+                "Designator": "D1",
+                "Symbol": "f7696ab492b5ba28",
+                "Device": "57f6c902de01bfdc",
+                "Footprint": "97ec37459fa64236",
+                "Supplier": "LCSC",
+                "Supplier Part": "C9900010236",
+                "Manufacturer": "null",
+                "Manufacturer Part": "DSS16UTR",
+                "JLCPCB Part Class": "Extended Part",
+                "link": "https://lcsc.com/eda_search?q=C9900010236&%26type=1&ref=editor",
+                "Unique ID": "gge7e5483cf393a0140",
+                "Description": "",
+                "Origin 3D Model Title": "SOD-123_L2.6-W1.8-LS3.7-RD",
+                "3D Model Transform": "145.669,70.866,0,0,0,0,0,0,0",
+                "Group ID": "",
+                "Channel ID": "$2e90",
+                "Reuse Block": "",
+                "DeviceName": "DSS16UTR",
+                "FootprintName": "SOD-123_L2.6-W1.8-LS3.7-RD"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "K",
+                    "number": "1",
+                    "net": "$2N21",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "A",
+                    "number": "2",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                }
+            }
+        },
+        "ggec4bde0a8ba31826e": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "KF128-2.54-2P",
+                "Designator": "J2",
+                "Symbol": "2d02f84a2d0c4ffa",
+                "Device": "cfca02923da89e6b",
+                "Footprint": "92866978dfd9f852",
+                "Supplier": "LCSC",
+                "Supplier Part": "C474920",
+                "Manufacturer": "KEFA(科发)",
+                "Manufacturer Part": "KF128-2.54-2P",
+                "JLCPCB Part Class": "Extended Part",
+                "Unique ID": "ggec4bde0a8ba31826e",
+                "Description": "",
+                "Origin 3D Model Title": "CONN-TH_P2.54_KF128-2.54-2P",
+                "3D Model Transform": "200,248.031,0,0,0,0,0,-5.906,-137.795",
+                "Group ID": "",
+                "Channel ID": "$2e112",
+                "Reuse Block": "",
+                "DeviceName": "KF128-2.54-2P",
+                "FootprintName": "CONN-TH_P2.54_KF128-2.54-2P"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "+V",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                }
+            }
+        },
+        "gge3b23e6b992976855": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "1u",
+                "Designator": "C1",
+                "Symbol": "1be07761567207c6",
+                "Device": "99f7c33961d09bcd",
+                "Footprint": "2eb7b89d891135ec",
+                "Unique ID": "gge3b23e6b992976855",
+                "Description": "",
+                "Origin 3D Model Title": "CAP-D5.0×H7.0×F2.0",
+                "3D Model Transform": "197.091,196.65457,0,180,0,180,0,0,275.591",
+                "Group ID": "",
+                "Channel ID": "$2e125",
+                "Reuse Block": "",
+                "DeviceName": "1u",
+                "FootprintName": "CAP-D5.0×F2.0"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "+V",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                }
+            }
+        },
+        "gge613237169519c5c2": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "DC005-2.0MM",
+                "Designator": "J1",
+                "Symbol": "8e295a13a45bbd90",
+                "Device": "c4c415fc41eb5714",
+                "Footprint": "02a93bd6fb50955c",
+                "Supplier": "LCSC",
+                "Manufacturer": "SOFNG",
+                "Manufacturer Part": "DC005-2.0MM",
+                "Supplier Part": "C111567",
+                "Unique ID": "gge613237169519c5c2",
+                "Description": "",
+                "Origin 3D Model Title": "dc",
+                "3D Model Transform": "400,1285.583,0,270,0,270,136.667,103.405,150",
+                "Group ID": "",
+                "Channel ID": "$2e133",
+                "Reuse Block": "",
+                "DeviceName": "DC005-2.0MM",
+                "FootprintName": "DC-5020"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "+V",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "3",
+                    "number": "3",
+                    "net": "",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                }
+            }
+        },
+        "gge2c4ace21dd07f742": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "KF128-2.54-2P",
+                "Designator": "J3",
+                "Symbol": "2d02f84a2d0c4ffa",
+                "Device": "cfca02923da89e6b",
+                "Footprint": "92866978dfd9f852",
+                "Supplier": "LCSC",
+                "Supplier Part": "C474920",
+                "Manufacturer": "KEFA(科发)",
+                "Manufacturer Part": "KF128-2.54-2P",
+                "JLCPCB Part Class": "Extended Part",
+                "Unique ID": "gge2c4ace21dd07f742",
+                "Description": "",
+                "Origin 3D Model Title": "CONN-TH_P2.54_KF128-2.54-2P",
+                "3D Model Transform": "200,248.031,0,0,0,0,0,-5.906,-137.795",
+                "Group ID": "",
+                "Channel ID": "$2e145",
+                "Reuse Block": "",
+                "DeviceName": "KF128-2.54-2P",
+                "FootprintName": "CONN-TH_P2.54_KF128-2.54-2P"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                }
+            }
+        },
+        "ggef884bce4eba41387": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "Raspberry Pi Pico W",
+                "Designator": "U1",
+                "Symbol": "d3ddb1876a74d90e",
+                "Device": "9fad71f576c8e13d",
+                "Footprint": "fbfc54e418ec90c6",
+                "Unique ID": "ggef884bce4eba41387",
+                "Description": "",
+                "Origin 3D Model Title": "raspberrypi-picow-withpins",
+                "3D Model Transform": "825,2066.697,0,180,0,0,5,23.622,-215",
+                "Group ID": "",
+                "Channel ID": "$2e170",
+                "Reuse Block": "",
+                "DeviceName": "Raspberry Pi Pico W",
+                "FootprintName": "RASPBERRY PI PICOW TH & SM"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "GPIO 0",
+                    "number": "1",
+                    "net": "OE",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "GPIO 1",
+                    "number": "2",
+                    "net": "LAT",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "GND",
+                    "number": "3",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                },
+                "4": {
+                    "name": "GPIO 2",
+                    "number": "4",
+                    "net": "CLK",
+                    "props": {
+                        "Pin Number": "4"
+                    }
+                },
+                "5": {
+                    "name": "GPIO 3",
+                    "number": "5",
+                    "net": "D",
+                    "props": {
+                        "Pin Number": "5"
+                    }
+                },
+                "6": {
+                    "name": "GPIO 4",
+                    "number": "6",
+                    "net": "C",
+                    "props": {
+                        "Pin Number": "6"
+                    }
+                },
+                "7": {
+                    "name": "GPIO 5",
+                    "number": "7",
+                    "net": "B",
+                    "props": {
+                        "Pin Number": "7"
+                    }
+                },
+                "8": {
+                    "name": "GND",
+                    "number": "8",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "8"
+                    }
+                },
+                "9": {
+                    "name": "GPIO 6",
+                    "number": "9",
+                    "net": "A",
+                    "props": {
+                        "Pin Number": "9"
+                    }
+                },
+                "10": {
+                    "name": "GPIO 7",
+                    "number": "10",
+                    "net": "E",
+                    "props": {
+                        "Pin Number": "10"
+                    }
+                },
+                "11": {
+                    "name": "GPIO 8",
+                    "number": "11",
+                    "net": "B2",
+                    "props": {
+                        "Pin Number": "11"
+                    }
+                },
+                "12": {
+                    "name": "GPIO 9",
+                    "number": "12",
+                    "net": "G2",
+                    "props": {
+                        "Pin Number": "12"
+                    }
+                },
+                "13": {
+                    "name": "GND",
+                    "number": "13",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "13"
+                    }
+                },
+                "14": {
+                    "name": "GPIO 10",
+                    "number": "14",
+                    "net": "R2",
+                    "props": {
+                        "Pin Number": "14"
+                    }
+                },
+                "15": {
+                    "name": "GPIO 11",
+                    "number": "15",
+                    "net": "G1",
+                    "props": {
+                        "Pin Number": "15"
+                    }
+                },
+                "16": {
+                    "name": "GPIO 12",
+                    "number": "16",
+                    "net": "B1",
+                    "props": {
+                        "Pin Number": "16"
+                    }
+                },
+                "17": {
+                    "name": "GPIO 13",
+                    "number": "17",
+                    "net": "R1",
+                    "props": {
+                        "Pin Number": "17"
+                    }
+                },
+                "18": {
+                    "name": "GND",
+                    "number": "18",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "18"
+                    }
+                },
+                "19": {
+                    "name": "GPIO 14",
+                    "number": "19",
+                    "net": "motorControlEnA",
+                    "props": {
+                        "Pin Number": "19"
+                    }
+                },
+                "20": {
+                    "name": "GPIO 15",
+                    "number": "20",
+                    "net": "led3",
+                    "props": {
+                        "Pin Number": "20"
+                    }
+                },
+                "21": {
+                    "name": "GPIO 16",
+                    "number": "21",
+                    "net": "SDA0",
+                    "props": {
+                        "Pin Number": "21"
+                    }
+                },
+                "22": {
+                    "name": "GPIO 17",
+                    "number": "22",
+                    "net": "SCL0",
+                    "props": {
+                        "Pin Number": "22"
+                    }
+                },
+                "23": {
+                    "name": "GND",
+                    "number": "23",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "23"
+                    }
+                },
+                "24": {
+                    "name": "GPIO 18",
+                    "number": "24",
+                    "net": "SDA1",
+                    "props": {
+                        "Pin Number": "24"
+                    }
+                },
+                "25": {
+                    "name": "GPIO 19",
+                    "number": "25",
+                    "net": "SCL1",
+                    "props": {
+                        "Pin Number": "25"
+                    }
+                },
+                "26": {
+                    "name": "GPIO 20",
+                    "number": "26",
+                    "net": "nINT",
+                    "props": {
+                        "Pin Number": "26"
+                    }
+                },
+                "27": {
+                    "name": "GPIO 21",
+                    "number": "27",
+                    "net": "nRESET",
+                    "props": {
+                        "Pin Number": "27"
+                    }
+                },
+                "28": {
+                    "name": "GND",
+                    "number": "28",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "28"
+                    }
+                },
+                "29": {
+                    "name": "GPIO 22",
+                    "number": "29",
+                    "net": "led2",
+                    "props": {
+                        "Pin Number": "29"
+                    }
+                },
+                "30": {
+                    "name": "RUN",
+                    "number": "30",
+                    "net": "",
+                    "props": {
+                        "Pin Number": "30"
+                    }
+                },
+                "31": {
+                    "name": "GPIO 26",
+                    "number": "31",
+                    "net": "servo1",
+                    "props": {
+                        "Pin Number": "31"
+                    }
+                },
+                "32": {
+                    "name": "GPIO 27",
+                    "number": "32",
+                    "net": "servo2",
+                    "props": {
+                        "Pin Number": "32"
+                    }
+                },
+                "33": {
+                    "name": "GND",
+                    "number": "33",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "33"
+                    }
+                },
+                "34": {
+                    "name": "GPIO 28",
+                    "number": "34",
+                    "net": "servo3",
+                    "props": {
+                        "Pin Number": "34"
+                    }
+                },
+                "35": {
+                    "name": "ADC_VREF",
+                    "number": "35",
+                    "net": "",
+                    "props": {
+                        "Pin Number": "35"
+                    }
+                },
+                "36": {
+                    "name": "3v3 (OUT)",
+                    "number": "36",
+                    "net": "",
+                    "props": {
+                        "Pin Number": "36"
+                    }
+                },
+                "37": {
+                    "name": "3v3_EN",
+                    "number": "37",
+                    "net": "",
+                    "props": {
+                        "Pin Number": "37"
+                    }
+                },
+                "38": {
+                    "name": "GND",
+                    "number": "38",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "38"
+                    }
+                },
+                "39": {
+                    "name": "VSYS",
+                    "number": "39",
+                    "net": "$2N21",
+                    "props": {
+                        "Pin Number": "39"
+                    }
+                },
+                "40": {
+                    "name": "VBUS",
+                    "number": "40",
+                    "net": "$2N40",
+                    "props": {
+                        "Pin Number": "40"
+                    }
+                }
+            }
+        },
+        "gge844e9f4cde0f61b6": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "HDR-M-2.54_1x6",
+                "Designator": "J10",
+                "Symbol": "bc0268f165c07daa",
+                "Device": "5e9c3aef944c76f7",
+                "Footprint": "6f3d185220f7d357",
+                "Supplier Part": "C190819",
+                "Supplier": "LCSC",
+                "Unique ID": "gge844e9f4cde0f61b6",
+                "Description": "",
+                "Origin 3D Model Title": "HDR-M-2.54_1x6",
+                "3D Model Transform": "599.999,100,0,0,0,0,0,0,-118.11",
+                "Group ID": "",
+                "Channel ID": "$2e178",
+                "Reuse Block": "",
+                "DeviceName": "HDR-M-2.54_1x6",
+                "FootprintName": "HDR-M-2.54_1X6"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "trackIsol5",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "3",
+                    "number": "3",
+                    "net": "trackIsol6",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                },
+                "4": {
+                    "name": "4",
+                    "number": "4",
+                    "net": "trackIsol7",
+                    "props": {
+                        "Pin Number": "4"
+                    }
+                },
+                "5": {
+                    "name": "5",
+                    "number": "5",
+                    "net": "trackIsol8",
+                    "props": {
+                        "Pin Number": "5"
+                    }
+                },
+                "6": {
+                    "name": "6",
+                    "number": "6",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "6"
+                    }
+                }
+            }
+        },
+        "gge9732051afdc760b5": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "HDR-M-2.54_1x6",
+                "Designator": "J9",
+                "Symbol": "bc0268f165c07daa",
+                "Device": "5e9c3aef944c76f7",
+                "Footprint": "6f3d185220f7d357",
+                "Supplier Part": "C190819",
+                "Supplier": "LCSC",
+                "Unique ID": "gge9732051afdc760b5",
+                "Description": "",
+                "Origin 3D Model Title": "HDR-M-2.54_1x6",
+                "3D Model Transform": "599.999,100,0,0,0,0,0,0,-118.11",
+                "Group ID": "",
+                "Channel ID": "$2e188",
+                "Reuse Block": "",
+                "DeviceName": "HDR-M-2.54_1x6",
+                "FootprintName": "HDR-M-2.54_1X6"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "trackIsol1",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "3",
+                    "number": "3",
+                    "net": "trackIsol2",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                },
+                "4": {
+                    "name": "4",
+                    "number": "4",
+                    "net": "trackIsol3",
+                    "props": {
+                        "Pin Number": "4"
+                    }
+                },
+                "5": {
+                    "name": "5",
+                    "number": "5",
+                    "net": "trackIsol4",
+                    "props": {
+                        "Pin Number": "5"
+                    }
+                },
+                "6": {
+                    "name": "6",
+                    "number": "6",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "6"
+                    }
+                }
+            }
+        },
+        "gge9e526d1c805471eb": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "HDR-M-2.54_1x3",
+                "Designator": "J7",
+                "Symbol": "736c256724265401",
+                "Device": "913c4edc09069627",
+                "Footprint": "c9dfdb5aba9e1038",
+                "Supplier Part": "C180248",
+                "Supplier": "LCSC",
+                "Unique ID": "gge9e526d1c805471eb",
+                "Description": "",
+                "Origin 3D Model Title": "HDR-M-2.54_1x3",
+                "3D Model Transform": "299.9994,100,0,0,0,0,0,0,-118.11",
+                "Group ID": "",
+                "Channel ID": "$2e198",
+                "Reuse Block": "",
+                "DeviceName": "HDR-M-2.54_1x3",
+                "FootprintName": "HDR-M-2.54_1X3"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "servo1",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "3",
+                    "number": "3",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                }
+            }
+        },
+        "gge97a89962ad72d8ea": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "HDR-M-2.54_1x3",
+                "Designator": "J8",
+                "Symbol": "736c256724265401",
+                "Device": "913c4edc09069627",
+                "Footprint": "c9dfdb5aba9e1038",
+                "Supplier Part": "C180248",
+                "Supplier": "LCSC",
+                "Unique ID": "gge97a89962ad72d8ea",
+                "Description": "",
+                "Origin 3D Model Title": "HDR-M-2.54_1x3",
+                "3D Model Transform": "299.9994,100,0,0,0,0,0,0,-118.11",
+                "Group ID": "",
+                "Channel ID": "$2e208",
+                "Reuse Block": "",
+                "DeviceName": "HDR-M-2.54_1x3",
+                "FootprintName": "HDR-M-2.54_1X3"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "servo2",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "3",
+                    "number": "3",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                }
+            }
+        },
+        "ggef58c5c4f4a1cb2f6": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "HDR-M-2.54_1x3",
+                "Designator": "J11",
+                "Symbol": "736c256724265401",
+                "Device": "913c4edc09069627",
+                "Footprint": "c9dfdb5aba9e1038",
+                "Supplier Part": "C180248",
+                "Supplier": "LCSC",
+                "Unique ID": "ggef58c5c4f4a1cb2f6",
+                "Description": "",
+                "Origin 3D Model Title": "HDR-M-2.54_1x3",
+                "3D Model Transform": "299.9994,100,0,0,0,0,0,0,-118.11",
+                "Group ID": "",
+                "Channel ID": "$2e218",
+                "Reuse Block": "",
+                "DeviceName": "HDR-M-2.54_1x3",
+                "FootprintName": "HDR-M-2.54_1X3"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "servo3",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "3",
+                    "number": "3",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                }
+            }
+        },
+        "gge83c42314792d65e5": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "HDR-M-2.54_1x4",
+                "Designator": "J12",
+                "Symbol": "0a2b3aa41b434589",
+                "Device": "7c11a382c775481a",
+                "Footprint": "70f4f5fcb23ea21a",
+                "Supplier Part": "C124378",
+                "Supplier": "LCSC",
+                "Unique ID": "gge83c42314792d65e5",
+                "Description": "",
+                "Origin 3D Model Title": "HDR-M-2.54_1x4",
+                "3D Model Transform": "399.999,100,0,0,0,0,0,0,-118.11",
+                "Group ID": "",
+                "Channel ID": "$2e228",
+                "Reuse Block": "",
+                "DeviceName": "HDR-M-2.54_1x4",
+                "FootprintName": "HDR-M-2.54_1X4"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "s1_1",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "3",
+                    "number": "3",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                },
+                "4": {
+                    "name": "4",
+                    "number": "4",
+                    "net": "s1_2",
+                    "props": {
+                        "Pin Number": "4"
+                    }
+                }
+            }
+        },
+        "gge3914ff914f54928e": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "HDR-M-2.54_1x4",
+                "Designator": "J13",
+                "Symbol": "0a2b3aa41b434589",
+                "Device": "7c11a382c775481a",
+                "Footprint": "70f4f5fcb23ea21a",
+                "Supplier Part": "C124378",
+                "Supplier": "LCSC",
+                "Unique ID": "gge3914ff914f54928e",
+                "Description": "",
+                "Origin 3D Model Title": "HDR-M-2.54_1x4",
+                "3D Model Transform": "399.999,100,0,0,0,0,0,0,-118.11",
+                "Group ID": "",
+                "Channel ID": "$2e238",
+                "Reuse Block": "",
+                "DeviceName": "HDR-M-2.54_1x4",
+                "FootprintName": "HDR-M-2.54_1X4"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "s2_1",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "3",
+                    "number": "3",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                },
+                "4": {
+                    "name": "4",
+                    "number": "4",
+                    "net": "s2_2",
+                    "props": {
+                        "Pin Number": "4"
+                    }
+                }
+            }
+        },
+        "gge19245fcc354485f3": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "HDR-M-2.54_1x4",
+                "Designator": "J14",
+                "Symbol": "0a2b3aa41b434589",
+                "Device": "7c11a382c775481a",
+                "Footprint": "70f4f5fcb23ea21a",
+                "Supplier Part": "C124378",
+                "Supplier": "LCSC",
+                "Unique ID": "gge19245fcc354485f3",
+                "Description": "",
+                "Origin 3D Model Title": "HDR-M-2.54_1x4",
+                "3D Model Transform": "399.999,100,0,0,0,0,0,0,-118.11",
+                "Group ID": "",
+                "Channel ID": "$2e248",
+                "Reuse Block": "",
+                "DeviceName": "HDR-M-2.54_1x4",
+                "FootprintName": "HDR-M-2.54_1X4"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "s3_1",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "3",
+                    "number": "3",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                },
+                "4": {
+                    "name": "4",
+                    "number": "4",
+                    "net": "s3_2",
+                    "props": {
+                        "Pin Number": "4"
+                    }
+                }
+            }
+        },
+        "gge717a984d6e49aa33": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "HDR-M-2.54_1x4",
+                "Designator": "J15",
+                "Symbol": "0a2b3aa41b434589",
+                "Device": "8fdce71afbb8b7e4",
+                "Footprint": "41f10aa4d5b7be1d",
+                "Supplier Part": "C124378",
+                "Supplier": "LCSC",
+                "Unique ID": "gge717a984d6e49aa33",
+                "Description": "",
+                "Origin 3D Model Title": "HDR-M-2.54_1x4",
+                "3D Model Transform": "399.999,100,0,0,0,0,0,0,-118.11",
+                "Group ID": "",
+                "Channel ID": "$2e258",
+                "Reuse Block": "",
+                "DeviceName": "HDR-M-2.54_1x4",
+                "FootprintName": "HDR-M-2.54_1X4"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "motorControlEnA",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "3",
+                    "number": "3",
+                    "net": "motorControlIn2",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                },
+                "4": {
+                    "name": "4",
+                    "number": "4",
+                    "net": "motorControlIn1",
+                    "props": {
+                        "Pin Number": "4"
+                    }
+                }
+            }
+        },
+        "ggef3fb2a692df727d3": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "0.1u",
+                "Designator": "C3",
+                "Symbol": "7be089acf1ce6838",
+                "Device": "11a5bdcf9520571e",
+                "Footprint": "4ee42137ec565186",
+                "Unique ID": "ggef3fb2a692df727d3",
+                "Description": "",
+                "Origin 3D Model Title": "C0603_L1.6-W0.8-H0.8",
+                "3D Model Transform": "62.992,31.496,0,0,0,0,0,0,0",
+                "Group ID": "",
+                "Channel ID": "$2e268",
+                "Reuse Block": "",
+                "DeviceName": "0.1u",
+                "FootprintName": "C0603"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                }
+            }
+        },
+        "ggec6e9e4714aa24668": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "MCP23017-E/SO",
+                "Designator": "U2",
+                "Symbol": "93135decca10dcbd",
+                "Device": "13b5da9b4e17d1ea",
+                "Footprint": "bba72ce0ed319fc5",
+                "Supplier": "LCSC",
+                "Manufacturer": "MICROCHIP(美国微芯)",
+                "Manufacturer Part": "MCP23017-E/SO",
+                "Supplier Part": "C47023",
+                "JLCPCB Part Class": "Extended Part",
+                "link": "https://lcsc.com/eda_search?q=C47023&%26type=1&ref=editor",
+                "Unique ID": "ggec6e9e4714aa24668",
+                "Description": "",
+                "Origin 3D Model Title": "SOIC-28_L17.9-W7.5-H2.7-LS10.3-P1.27",
+                "3D Model Transform": "704.723,409.68154,0,0,0,0,3.938,0,0",
+                "Group ID": "",
+                "Channel ID": "$2e288",
+                "Reuse Block": "",
+                "DeviceName": "MCP23017-E/SO",
+                "FootprintName": "SOIC-28_L18.0-W7.5-P1.27-LS10.3-BL"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "GPB0",
+                    "number": "1",
+                    "net": "trackIsol1",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "GPB1",
+                    "number": "2",
+                    "net": "trackIsol2",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "GPB2",
+                    "number": "3",
+                    "net": "trackIsol3",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                },
+                "4": {
+                    "name": "GPB3",
+                    "number": "4",
+                    "net": "trackIsol4",
+                    "props": {
+                        "Pin Number": "4"
+                    }
+                },
+                "5": {
+                    "name": "GPB4",
+                    "number": "5",
+                    "net": "trackIsol5",
+                    "props": {
+                        "Pin Number": "5"
+                    }
+                },
+                "6": {
+                    "name": "GPB5",
+                    "number": "6",
+                    "net": "trackIsol6",
+                    "props": {
+                        "Pin Number": "6"
+                    }
+                },
+                "7": {
+                    "name": "GPB6",
+                    "number": "7",
+                    "net": "trackIsol7",
+                    "props": {
+                        "Pin Number": "7"
+                    }
+                },
+                "8": {
+                    "name": "GPB7",
+                    "number": "8",
+                    "net": "trackIsol8",
+                    "props": {
+                        "Pin Number": "8"
+                    }
+                },
+                "9": {
+                    "name": "VDD",
+                    "number": "9",
+                    "net": "5V",
+                    "props": {
+                        "Pin Number": "9"
+                    }
+                },
+                "10": {
+                    "name": "VSS",
+                    "number": "10",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "10"
+                    }
+                },
+                "11": {
+                    "name": "NC",
+                    "number": "11",
+                    "net": "",
+                    "props": {
+                        "Pin Number": "11"
+                    }
+                },
+                "12": {
+                    "name": "SCL",
+                    "number": "12",
+                    "net": "SCL0",
+                    "props": {
+                        "Pin Number": "12"
+                    }
+                },
+                "13": {
+                    "name": "SDA",
+                    "number": "13",
+                    "net": "SDA0",
+                    "props": {
+                        "Pin Number": "13"
+                    }
+                },
+                "14": {
+                    "name": "NC",
+                    "number": "14",
+                    "net": "",
+                    "props": {
+                        "Pin Number": "14"
+                    }
+                },
+                "15": {
+                    "name": "A0",
+                    "number": "15",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "15"
+                    }
+                },
+                "16": {
+                    "name": "A1",
+                    "number": "16",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "16"
+                    }
+                },
+                "17": {
+                    "name": "A2",
+                    "number": "17",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "17"
+                    }
+                },
+                "18": {
+                    "name": "RESET#",
+                    "number": "18",
+                    "net": "nRESET",
+                    "props": {
+                        "Pin Number": "18"
+                    }
+                },
+                "19": {
+                    "name": "INTB",
+                    "number": "19",
+                    "net": "nINT",
+                    "props": {
+                        "Pin Number": "19"
+                    }
+                },
+                "20": {
+                    "name": "INTA",
+                    "number": "20",
+                    "net": "nINT",
+                    "props": {
+                        "Pin Number": "20"
+                    }
+                },
+                "21": {
+                    "name": "GPA0",
+                    "number": "21",
+                    "net": "motorControlIn1",
+                    "props": {
+                        "Pin Number": "21"
+                    }
+                },
+                "22": {
+                    "name": "GPA1",
+                    "number": "22",
+                    "net": "motorControlIn2",
+                    "props": {
+                        "Pin Number": "22"
+                    }
+                },
+                "23": {
+                    "name": "GPA2",
+                    "number": "23",
+                    "net": "s1_1",
+                    "props": {
+                        "Pin Number": "23"
+                    }
+                },
+                "24": {
+                    "name": "GPA3",
+                    "number": "24",
+                    "net": "s1_2",
+                    "props": {
+                        "Pin Number": "24"
+                    }
+                },
+                "25": {
+                    "name": "GPA4",
+                    "number": "25",
+                    "net": "s2_1",
+                    "props": {
+                        "Pin Number": "25"
+                    }
+                },
+                "26": {
+                    "name": "GPA5",
+                    "number": "26",
+                    "net": "s2_2",
+                    "props": {
+                        "Pin Number": "26"
+                    }
+                },
+                "27": {
+                    "name": "GPA6",
+                    "number": "27",
+                    "net": "s3_1",
+                    "props": {
+                        "Pin Number": "27"
+                    }
+                },
+                "28": {
+                    "name": "GPA7",
+                    "number": "28",
+                    "net": "s3_2",
+                    "props": {
+                        "Pin Number": "28"
+                    }
+                }
+            }
+        },
+        "gge282e1f9d180ffedd": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "LED-0805_R",
+                "Designator": "LED2",
+                "Symbol": "114061c68774bc6f",
+                "Device": "186774592318b110",
+                "Footprint": "840d5114b71a38b1",
+                "Manufacturer": "EVERLIGHT(台湾亿光)",
+                "Manufacturer Part": "17-21SURC/S530-A3/TR8",
+                "Supplier Part": "C72037",
+                "Unique ID": "gge282e1f9d180ffedd",
+                "Description": "",
+                "Origin 3D Model Title": "LED0805_Red",
+                "3D Model Transform": "102.362,64.488,0,180,0,0,5.908,0,0",
+                "Group ID": "",
+                "Channel ID": "$2e314",
+                "Reuse Block": "",
+                "DeviceName": "17-21SURC/S530-A3/TR8",
+                "FootprintName": "LED0805_RED"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "$2N84",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                }
+            }
+        },
+        "gge664435c6ef567a03": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "1k",
+                "Designator": "R2",
+                "Symbol": "9adb4615bab3e7e5",
+                "Device": "e3ee6744ad4c002a",
+                "Footprint": "0053beec1f9b605e",
+                "Unique ID": "gge664435c6ef567a03",
+                "Description": "",
+                "Origin 3D Model Title": "R0603",
+                "3D Model Transform": "31.8897,63.7794,0,90,0,0,0,0,0",
+                "Group ID": "",
+                "Channel ID": "$2e325",
+                "Reuse Block": "",
+                "DeviceName": "1k",
+                "FootprintName": "R0603"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "led2",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "$2N84",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                }
+            }
+        },
+        "gge21552bb82105f45e": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "1k",
+                "Designator": "R3",
+                "Symbol": "9adb4615bab3e7e5",
+                "Device": "e3ee6744ad4c002a",
+                "Footprint": "0053beec1f9b605e",
+                "Unique ID": "gge21552bb82105f45e",
+                "Description": "",
+                "Origin 3D Model Title": "R0603",
+                "3D Model Transform": "31.8897,63.7794,0,90,0,0,0,0,0",
+                "Group ID": "",
+                "Channel ID": "$2e341",
+                "Reuse Block": "",
+                "DeviceName": "1k",
+                "FootprintName": "R0603"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "led3",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "$2N101",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                }
+            }
+        },
+        "ggee46b37fc7a1d8545": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "LED-0805_R",
+                "Designator": "LED3",
+                "Symbol": "114061c68774bc6f",
+                "Device": "186774592318b110",
+                "Footprint": "840d5114b71a38b1",
+                "Manufacturer": "EVERLIGHT(台湾亿光)",
+                "Manufacturer Part": "17-21SURC/S530-A3/TR8",
+                "Supplier Part": "C72037",
+                "Unique ID": "ggee46b37fc7a1d8545",
+                "Description": "",
+                "Origin 3D Model Title": "LED0805_Red",
+                "3D Model Transform": "102.362,64.488,0,180,0,0,5.908,0,0",
+                "Group ID": "",
+                "Channel ID": "$2e349",
+                "Reuse Block": "",
+                "DeviceName": "17-21SURC/S530-A3/TR8",
+                "FootprintName": "LED0805_RED"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "$2N101",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                }
+            }
+        },
+        "ggefb19e8e645b23d87": {
+            "props": {
+                "Add into BOM": "yes",
+                "Convert to PCB": "yes",
+                "Name": "HDR-IDC-2.54-2X8P",
+                "Designator": "J6",
+                "Symbol": "7e27a72cffadbdec",
+                "Device": "cd2af85f15b45a33",
+                "Footprint": "f2382a3a65e883d1",
+                "EasyEDA": "E3406",
+                "Supplier Part": "E3406",
+                "Supplier": "EasyEDA",
+                "Manufacturer": "EasyEDA",
+                "Manufacturer Part": "HDR-IDC-2.54-2X8P",
+                "Unique ID": "ggefb19e8e645b23d87",
+                "Description": "",
+                "Origin 3D Model Title": "HDR-IDC-2.54-2X8P",
+                "3D Model Transform": "1099.99784,348.41478,0,0,0,0,-49.005,50.505,-115",
+                "Group ID": "",
+                "Channel ID": "$2e360",
+                "Reuse Block": "",
+                "DeviceName": "HDR-IDC-2.54-2X8P",
+                "FootprintName": "HDR-IDC-2.54-2X8P"
+            },
+            "pinInfoMap": {
+                "1": {
+                    "name": "1",
+                    "number": "1",
+                    "net": "R1",
+                    "props": {
+                        "Pin Number": "1"
+                    }
+                },
+                "2": {
+                    "name": "2",
+                    "number": "2",
+                    "net": "G1",
+                    "props": {
+                        "Pin Number": "2"
+                    }
+                },
+                "3": {
+                    "name": "3",
+                    "number": "3",
+                    "net": "B1",
+                    "props": {
+                        "Pin Number": "3"
+                    }
+                },
+                "4": {
+                    "name": "4",
+                    "number": "4",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "4"
+                    }
+                },
+                "5": {
+                    "name": "5",
+                    "number": "5",
+                    "net": "R2",
+                    "props": {
+                        "Pin Number": "5"
+                    }
+                },
+                "6": {
+                    "name": "6",
+                    "number": "6",
+                    "net": "G2",
+                    "props": {
+                        "Pin Number": "6"
+                    }
+                },
+                "7": {
+                    "name": "7",
+                    "number": "7",
+                    "net": "B2",
+                    "props": {
+                        "Pin Number": "7"
+                    }
+                },
+                "8": {
+                    "name": "8",
+                    "number": "8",
+                    "net": "E",
+                    "props": {
+                        "Pin Number": "8"
+                    }
+                },
+                "9": {
+                    "name": "9",
+                    "number": "9",
+                    "net": "A",
+                    "props": {
+                        "Pin Number": "9"
+                    }
+                },
+                "10": {
+                    "name": "10",
+                    "number": "10",
+                    "net": "B",
+                    "props": {
+                        "Pin Number": "10"
+                    }
+                },
+                "11": {
+                    "name": "11",
+                    "number": "11",
+                    "net": "C",
+                    "props": {
+                        "Pin Number": "11"
+                    }
+                },
+                "12": {
+                    "name": "12",
+                    "number": "12",
+                    "net": "D",
+                    "props": {
+                        "Pin Number": "12"
+                    }
+                },
+                "13": {
+                    "name": "13",
+                    "number": "13",
+                    "net": "CLK",
+                    "props": {
+                        "Pin Number": "13"
+                    }
+                },
+                "14": {
+                    "name": "14",
+                    "number": "14",
+                    "net": "LAT",
+                    "props": {
+                        "Pin Number": "14"
+                    }
+                },
+                "15": {
+                    "name": "15",
+                    "number": "15",
+                    "net": "OE",
+                    "props": {
+                        "Pin Number": "15"
+                    }
+                },
+                "16": {
+                    "name": "16",
+                    "number": "16",
+                    "net": "0V",
+                    "props": {
+                        "Pin Number": "16"
+                    }
+                }
+            }
+        }
+    },
+    "designRule": {
+        "trackPhysics": {
+            "copperThickness1oz": {
+                "name": "copperThickness1oz",
+                "isDefault": true,
+                "unit": "mm",
+                "strokeValue": {
+                    "common": {
+                        "min": 0.127,
+                        "max": 2.54,
+                        "default": 0.254
+                    }
+                }
+            },
+            "copperThickness2oz": {
+                "name": "copperThickness2oz",
+                "isDefault": false,
+                "unit": "mm",
+                "strokeValue": {
+                    "common": {
+                        "min": 0.203,
+                        "max": 2.54,
+                        "default": 0.254
+                    }
+                }
+            }
+        },
+        "netRule": {
+            "0V": {
+                "net": "0V",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "5V": {
+                "net": "5V",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "SDA0": {
+                "net": "SDA0",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "SCL0": {
+                "net": "SCL0",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "nINT": {
+                "net": "nINT",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "SDA1": {
+                "net": "SDA1",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "SCL1": {
+                "net": "SCL1",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "nRESET": {
+                "net": "nRESET",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "$2N21": {
+                "net": "$2N21",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "+V": {
+                "net": "+V",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "G1": {
+                "net": "G1",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "G2": {
+                "net": "G2",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "E": {
+                "net": "E",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "B": {
+                "net": "B",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "D": {
+                "net": "D",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "LAT": {
+                "net": "LAT",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "R1": {
+                "net": "R1",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "B1": {
+                "net": "B1",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "R2": {
+                "net": "R2",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "B2": {
+                "net": "B2",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "A": {
+                "net": "A",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "C": {
+                "net": "C",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "CLK": {
+                "net": "CLK",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "OE": {
+                "net": "OE",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "$2N40": {
+                "net": "$2N40",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "trackIsol5": {
+                "net": "trackIsol5",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "trackIsol6": {
+                "net": "trackIsol6",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "trackIsol7": {
+                "net": "trackIsol7",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "trackIsol8": {
+                "net": "trackIsol8",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "trackIsol1": {
+                "net": "trackIsol1",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "trackIsol2": {
+                "net": "trackIsol2",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "trackIsol3": {
+                "net": "trackIsol3",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "trackIsol4": {
+                "net": "trackIsol4",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "motorControlEnA": {
+                "net": "motorControlEnA",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "motorControlIn2": {
+                "net": "motorControlIn2",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "motorControlIn1": {
+                "net": "motorControlIn1",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "servo3": {
+                "net": "servo3",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "servo2": {
+                "net": "servo2",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "servo1": {
+                "net": "servo1",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "led2": {
+                "net": "led2",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "$2N84": {
+                "net": "$2N84",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "s3_1": {
+                "net": "s3_1",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "s3_2": {
+                "net": "s3_2",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "s2_2": {
+                "net": "s2_2",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "s2_1": {
+                "net": "s2_1",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "s1_1": {
+                "net": "s1_1",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "s1_2": {
+                "net": "s1_2",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "$2N101": {
+                "net": "$2N101",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "led3": {
+                "net": "led3",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            },
+            "$2N104": {
+                "net": "$2N104",
+                "ruleMap": {
+                    "TrackPhysics": ""
+                }
+            }
+        }
+    },
+    "differentialPair": {},
+    "netClass": {},
+    "equalLengthNetGroup": {}
+}
