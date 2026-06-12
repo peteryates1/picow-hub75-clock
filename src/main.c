@@ -13,6 +13,7 @@
 #include "ntp.h"
 #include "weather.h"
 #include "font.h"
+#include "font_large.h"
 
 // Colours (full-scale; the LDR/brightness control dims the whole panel).
 #define TIME_R 0
@@ -24,14 +25,20 @@
 #define TEMP_R 255
 #define TEMP_G 140
 #define TEMP_B 0     // amber temperature
+#define FC_R 150
+#define FC_G 80
+#define FC_B 0       // dimmer amber for the min/max forecast
 
-static const char *const WDAY[7]   = {"SUN","MON","TUE","WED","THU","FRI","SAT"};
+static const char *const WDAY_FULL[7] = {"SUNDAY","MONDAY","TUESDAY","WEDNESDAY",
+                                         "THURSDAY","FRIDAY","SATURDAY"};
 static const char *const MONTH[12] = {"JAN","FEB","MAR","APR","MAY","JUN",
                                       "JUL","AUG","SEP","OCT","NOV","DEC"};
 
 // Latest outside temperature as a printable string; '~' renders as the degree
-// glyph. "--~" until the first weather fetch lands (wired up separately).
+// glyph. "--~" until the first weather fetch lands.
 static char g_temp[12] = "--~";
+// Today's forecast min/max, e.g. "12-19"; empty until fetched.
+static char g_minmax[12] = "";
 
 // Draw one 5x7 character at (x,y) with each pixel expanded to scale x scale.
 static void draw_char(int x, int y, char c, int scale,
@@ -48,40 +55,90 @@ static void draw_char(int x, int y, char c, int scale,
     }
 }
 
-// Draw a string left-to-right; each cell is (FONT_W+1)*scale wide.
+// Horizontal advance for a character. Narrow glyphs ('-', ':', space) take less
+// room so dense lines like "12 JUN 2026" fit the 64px width.
+static int char_advance(char c, int scale) {
+    return (c == '-' || c == ':' || c == ' ' || c == '~') ? 4 * scale
+                                                          : (FONT_W + 1) * scale;
+}
+
+// Draw an antialiased grayscale glyph: each cell value (0-255) scales the
+// colour, giving smooth edges via the panel's BCM brightness levels.
+static void draw_glyph_aa(int x, int y, const uint8_t *glyph, int gw, int gh,
+                          uint8_t cr, uint8_t cg, uint8_t cb) {
+    for (int py = 0; py < gh; py++)
+        for (int px = 0; px < gw; px++) {
+            uint8_t v = glyph[py * gw + px];
+            if (!v) continue;
+            hub75_set_pixel(x + px, y + py,
+                            (uint16_t)cr * v / 255,
+                            (uint16_t)cg * v / 255,
+                            (uint16_t)cb * v / 255);
+        }
+}
+
+// Tiny 3x5 font, for the min/max forecast line. Digits advance 4px, dash 3px.
+static void draw_tiny_char(int x, int y, char c, uint8_t r, uint8_t g, uint8_t b) {
+    const uint8_t *rows;
+    if (c >= '0' && c <= '9') rows = TINY_DIGITS[c - '0'];
+    else if (c == '-')        rows = TINY_DASH;
+    else if (c == '/')        rows = TINY_SLASH;
+    else return;
+    for (int ry = 0; ry < TINY_H; ry++)
+        for (int rx = 0; rx < TINY_W; rx++)
+            if (rows[ry] & (1u << (TINY_W - 1 - rx)))
+                hub75_set_pixel(x + rx, y + ry, r, g, b);
+}
+
+static int tiny_width(const char *s) {
+    int w = 0;
+    for (; *s; s++) w += (*s == '-') ? 3 : (TINY_W + 1);
+    return w ? w - 1 : 0;
+}
+
+static void draw_tiny(int x, int y, const char *s, uint8_t r, uint8_t g, uint8_t b) {
+    for (; *s; s++) {
+        draw_tiny_char(x, y, *s, r, g, b);
+        x += (*s == '-') ? 3 : (TINY_W + 1);
+    }
+}
+
+// Draw a string left-to-right using per-character advances.
 static void draw_text(int x, int y, const char *s, int scale,
                       uint8_t r, uint8_t g, uint8_t b) {
     for (; *s; s++) {
         draw_char(x, y, *s, scale, r, g, b);
-        x += (FONT_W + 1) * scale;
+        x += char_advance(*s, scale);
     }
 }
 
-// Pixel width of a string at the given scale (no trailing inter-char gap).
+// Pixel width of a string at the given scale (used for centring/right-align).
 static int text_width(const char *s, int scale) {
-    int n = (int)strlen(s);
-    return n > 0 ? n * (FONT_W + 1) * scale - scale : 0;
+    int w = 0;
+    for (; *s; s++) w += char_advance(*s, scale);
+    return w;
 }
 
 // Full clock face: large HH:MM top-left, temperature top-right, day+date below.
 static void draw_clock_face(const struct tm *t, bool colon_on) {
     hub75_clear();
 
-    // Time: scale 2 (10x14 digits), top-left.
-    const int s = 2, dw = FONT_W * s, ty = 1;
+    // Time: large antialiased font, top-left. HH<colon>MM, colon blinks.
+    // 1px gaps between digits; tight colon — sized to leave the top-right for
+    // the temperature.
+    const int gw = FONT_LARGE_W, gh = FONT_LARGE_H;
+    const int ty = (PANEL_SCAN_ROWS - gh) / 2;   // centre in the top half
+    const int d[4] = { t->tm_hour / 10, t->tm_hour % 10,
+                       t->tm_min / 10,  t->tm_min % 10 };
     int x = 0;
-    draw_char(x, ty, '0' + t->tm_hour / 10, s, TIME_R, TIME_G, TIME_B); x += dw + 1;
-    draw_char(x, ty, '0' + t->tm_hour % 10, s, TIME_R, TIME_G, TIME_B); x += dw + 1;
-    if (colon_on) {                       // narrow colon: two scale x scale dots
-        for (int dy = 0; dy < s; dy++)
-            for (int dx = 0; dx < s; dx++) {
-                hub75_set_pixel(x + dx, ty + 4 + dy, TIME_R, TIME_G, TIME_B);
-                hub75_set_pixel(x + dx, ty + 9 + dy, TIME_R, TIME_G, TIME_B);
-            }
-    }
-    x += s + 2;                           // colon advance (~4px)
-    draw_char(x, ty, '0' + t->tm_min / 10, s, TIME_R, TIME_G, TIME_B); x += dw + 1;
-    draw_char(x, ty, '0' + t->tm_min % 10, s, TIME_R, TIME_G, TIME_B);
+    draw_glyph_aa(x, ty, &FONT_LARGE_DIGITS[d[0]][0][0], gw, gh, TIME_R, TIME_G, TIME_B); x += gw + 1;
+    draw_glyph_aa(x, ty, &FONT_LARGE_DIGITS[d[1]][0][0], gw, gh, TIME_R, TIME_G, TIME_B); x += gw + 1;
+    if (colon_on)
+        draw_glyph_aa(x, ty, &FONT_LARGE_COLON[0][0], FONT_LARGE_COLON_W, gh,
+                      TIME_R, TIME_G, TIME_B);
+    x += FONT_LARGE_COLON_W - 1;                  // colon advance (~5px)
+    draw_glyph_aa(x, ty, &FONT_LARGE_DIGITS[d[2]][0][0], gw, gh, TIME_R, TIME_G, TIME_B); x += gw + 1;
+    draw_glyph_aa(x, ty, &FONT_LARGE_DIGITS[d[3]][0][0], gw, gh, TIME_R, TIME_G, TIME_B);
 
     // Temperature: scale 1, top-right, right-aligned but kept clear of the time.
     int tw = text_width(g_temp, 1);
@@ -89,15 +146,28 @@ static void draw_clock_face(const struct tm *t, bool colon_on) {
     if (tx < 48) tx = 48;
     draw_text(tx, 0, g_temp, 1, TEMP_R, TEMP_G, TEMP_B);
 
-    // Day + date: scale 1, centred on the bottom half. e.g. "MON 12 JUN".
+    // Today's min/max forecast, tiny font, right-aligned under the temperature.
+    if (g_minmax[0]) {
+        int mw = tiny_width(g_minmax);
+        int mmx = PANEL_WIDTH - mw;
+        if (mmx < 44) mmx = 44;
+        draw_tiny(mmx, 9, g_minmax, FC_R, FC_G, FC_B);
+    }
+
+    // Bottom half: two centred lines — numeric date, then the full day name.
     char date[16];
-    snprintf(date, sizeof date, "%s %d %s",
-             WDAY[t->tm_wday], t->tm_mday, MONTH[t->tm_mon]);
-    int dwid = text_width(date, 1);
-    int dx = (PANEL_WIDTH - dwid) / 2;
-    if (dx < 0) dx = 0;
-    int dy = PANEL_SCAN_ROWS + (PANEL_SCAN_ROWS - FONT_H) / 2;
-    draw_text(dx, dy, date, 1, DATE_R, DATE_G, DATE_B);
+    snprintf(date, sizeof date, "%02d %s %04d",
+             t->tm_mday, MONTH[t->tm_mon], t->tm_year + 1900);
+    int dw1 = text_width(date, 1);
+    int dx1 = (PANEL_WIDTH - dw1) / 2;
+    if (dx1 < 0) dx1 = 0;
+    draw_text(dx1, PANEL_SCAN_ROWS + 1, date, 1, DATE_R, DATE_G, DATE_B);
+
+    const char *day = WDAY_FULL[t->tm_wday];
+    int dw2 = text_width(day, 1);
+    int dx2 = (PANEL_WIDTH - dw2) / 2;
+    if (dx2 < 0) dx2 = 0;
+    draw_text(dx2, PANEL_SCAN_ROWS + 9, day, 1, DATE_R, DATE_G, DATE_B);
 }
 
 static void draw_block(int x0, int y0, uint8_t r, uint8_t g, uint8_t b) {
@@ -295,10 +365,12 @@ int main(void) {
         // Outside temperature from wttr.in: refresh periodically, retry sooner
         // on failure. core1 keeps refreshing the panel while this blocks.
         if (absolute_time_diff_us(get_absolute_time(), next_weather) <= 0) {
-            int celsius;
-            if (weather_fetch_temp(&celsius, 8000)) {
-                snprintf(g_temp, sizeof g_temp, "%d~", celsius);
-                printf("Weather: %d C\n", celsius);
+            int cur, mn = -999, mx = -999;
+            if (weather_fetch(&cur, &mn, &mx, 8000)) {
+                snprintf(g_temp, sizeof g_temp, "%d~", cur);
+                if (mn > -999 && mx > -999)
+                    snprintf(g_minmax, sizeof g_minmax, "%d/%d", mn, mx);
+                printf("Weather: %d C (min %d max %d)\n", cur, mn, mx);
                 next_weather = make_timeout_time_ms(
                     (uint32_t)WEATHER_UPDATE_MINUTES * 60 * 1000);
             } else {
@@ -318,11 +390,12 @@ int main(void) {
                 time_t local = hts.tv_sec + local_offset(hts.tv_sec);
                 struct tm t;
                 gmtime_r(&local, &t);
-                printf("[hb] core1=%d frames=%u wifi_link=%d time=%02d:%02d:%02d\n",
-                       core1, frames, link, t.tm_hour, t.tm_min, t.tm_sec);
+                printf("[hb] core1=%d frames=%u wifi_link=%d time=%02d:%02d:%02d temp=%s mm=%s\n",
+                       core1, frames, link, t.tm_hour, t.tm_min, t.tm_sec,
+                       g_temp, g_minmax[0] ? g_minmax : "-");
             } else {
-                printf("[hb] core1=%d frames=%u wifi_link=%d time=unset\n",
-                       core1, frames, link);
+                printf("[hb] core1=%d frames=%u wifi_link=%d time=unset temp=%s mm=%s\n",
+                       core1, frames, link, g_temp, g_minmax[0] ? g_minmax : "-");
             }
         }
 

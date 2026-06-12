@@ -10,14 +10,14 @@
 #include "lwip/dns.h"
 #include "lwip/tcp.h"
 
-// wttr.in returns a plain-text temperature (e.g. "+18°C") for the `?format=%t`
-// query *only* when the User-Agent looks like curl; browsers get HTML. The
-// reply is tiny, so a small buffer is plenty. The body may be chunked, so we
-// don't parse HTTP framing — we just scan the body for the first signed integer
-// (the %t output always carries a +/- sign), which skips any chunk-size digits.
-#define WEATHER_HOST "wttr.in"
+// We fetch a small JSON forecast from Open-Meteo over plain HTTP and pull out
+// three numbers: current temperature, and today's max/min. The response is
+// ~500 bytes, so a 1KB buffer is plenty. We scan for tokens rather than parsing
+// JSON properly; the keys are anchored under "current"/"daily" to avoid the
+// matching "*_units" string fields.
+#define WEATHER_HOST "api.open-meteo.com"
 #define HTTP_PORT    80
-#define RESP_MAX     512
+#define RESP_MAX     1024
 
 typedef struct {
     ip_addr_t       addr;
@@ -48,13 +48,16 @@ static err_t on_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err) 
 static err_t on_connected(void *arg, struct tcp_pcb *pcb, err_t err) {
     weather_ctx_t *c = (weather_ctx_t *)arg;
     if (err != ERR_OK) { c->done = true; return err; }
-    char req[160];
+    char req[256];
     int n = snprintf(req, sizeof req,
-                     "GET /%s?format=%%t HTTP/1.1\r\n"
+                     "GET /v1/forecast?latitude=" WEATHER_LAT
+                     "&longitude=" WEATHER_LON
+                     "&current=temperature_2m"
+                     "&daily=temperature_2m_max,temperature_2m_min"
+                     "&timezone=GMT&forecast_days=1 HTTP/1.1\r\n"
                      "Host: " WEATHER_HOST "\r\n"
                      "User-Agent: curl/8.0\r\n"
-                     "Connection: close\r\n\r\n",
-                     WEATHER_LOCATION);
+                     "Connection: close\r\n\r\n");
     tcp_write(pcb, req, n, TCP_WRITE_FLAG_COPY);
     tcp_output(pcb);
     return ERR_OK;
@@ -87,20 +90,23 @@ static void dns_cb(const char *name, const ip_addr_t *addr, void *arg) {
     start_connect(c);    // in lwIP callback context
 }
 
-// Scan the response body for the first signed integer and return it.
-static bool parse_temp(const char *resp, int *out_c) {
-    const char *body = strstr(resp, "\r\n\r\n");
-    const char *p = body ? body + 4 : resp;
-    for (; *p; p++) {
-        if ((*p == '+' || *p == '-') && p[1] >= '0' && p[1] <= '9') {
-            *out_c = atoi(p);
-            return true;
-        }
-    }
-    return false;
+// Find `token` in `s`, then parse the number immediately after it (skipping a
+// leading '[' for array values), rounding to the nearest int. The value must
+// start right after the token (after spaces/'['), so it won't accidentally read
+// a "..._units":"°C" string field. Returns false if not found/not numeric.
+static bool num_after(const char *s, const char *token, int *out) {
+    const char *p = strstr(s, token);
+    if (!p) return false;
+    p += strlen(token);
+    while (*p == ' ' || *p == '[') p++;
+    if (*p != '-' && !(*p >= '0' && *p <= '9')) return false;
+    double v = atof(p);
+    *out = (int)(v < 0 ? v - 0.5 : v + 0.5);
+    return true;
 }
 
-bool weather_fetch_temp(int *out_celsius, uint32_t timeout_ms) {
+bool weather_fetch(int *out_current, int *out_min, int *out_max,
+                   uint32_t timeout_ms) {
     static weather_ctx_t c;   // keep the 512-byte buffer off the stack
     memset(&c, 0, sizeof c);
 
@@ -128,5 +134,13 @@ bool weather_fetch_temp(int *out_celsius, uint32_t timeout_ms) {
     cyw43_arch_lwip_end();
 
     c.resp[c.resp_len] = '\0';
-    return parse_temp(c.resp, out_celsius);
+    // Anchor on the "current"/"daily" data objects so we read the numeric
+    // values, not the matching "current_units"/"daily_units" strings.
+    const char *daily = strstr(c.resp, "\"daily\":");
+    if (daily) {
+        if (out_min) num_after(daily, "\"temperature_2m_min\":", out_min);
+        if (out_max) num_after(daily, "\"temperature_2m_max\":", out_max);
+    }
+    const char *cur = strstr(c.resp, "\"current\":");
+    return cur && num_after(cur, "\"temperature_2m\":", out_current);
 }

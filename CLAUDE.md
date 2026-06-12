@@ -173,26 +173,34 @@ runs at the fixed `DEFAULT_BRIGHTNESS` with no light sensing.
 
 ### Rendering
 
-`font.h` is a 5×7 bitmap font (digits, A–Z, `:`, space, and `~` = degree),
-looked up by character via `font_glyph()`. `main.c` has scalable text drawing
-(`draw_char`/`draw_text`, each font pixel expanded to a `scale`×`scale` block)
-and `draw_clock_face()` lays out: large (scale-2) `HH:MM` top-left with a 1 Hz
-blinking colon, the outside temperature top-right (amber, right-aligned), and
-`WDAY DD MON` (e.g. `MON 12 JUN`) centred on the bottom half. The frame is
-cleared and redrawn each 200 ms tick on core0; until the clock is set it shows
-the bring-up test pattern instead.
+Fonts:
+- `font.h` — 5×7 font (digits, A–Z, `:`, space, `-`, `~`=degree) via
+  `font_glyph()`, plus a tiny 3×5 digit/dash font for the min/max line.
+- `font_large.h` — **antialiased grayscale** large digits + colon, *generated*
+  by `tools/genfont.py` (rasterises DejaVu Sans Condensed at a fixed size with
+  Pillow; one byte/pixel = brightness). Regenerate with
+  `python3 tools/genfont.py > src/font_large.h`. `draw_glyph_aa()` scales the
+  draw colour by each pixel's value, so the 6-bit BCM gives smooth edges.
 
-### Weather (outside temperature)
+`draw_clock_face()` lays out: large antialiased `HH:MM` top-left (1 Hz blinking
+colon), current temperature top-right with today's min/max (`14-22`, tiny font)
+under it, and `DD MON YYYY` over the full weekday name centred on the bottom
+half. `draw_char`/`draw_text` do scalable 5×7 text with per-character advances
+(narrow `-`/`:`/space/`~`). Cleared and redrawn each 200 ms on core0; before the
+clock is set it shows the bring-up test pattern.
 
-`weather.c` fetches the temperature from **wttr.in over plain HTTP** (lwIP raw
-TCP, no TLS) — `GET /<WEATHER_LOCATION>?format=%t`. Two non-obvious details: the
-`User-Agent` must look like curl or wttr.in returns HTML instead of the plain
-`+18°C` text, and the body may be chunked, so the parser just scans for the
-first signed integer (skipping any chunk-size digits). `WEATHER_LOCATION` is a
-build define (`-DWEATHER_LOCATION=Fleckney`, single token, no spaces). The main
-loop refreshes every `WEATHER_UPDATE_MINUTES`, retrying sooner on failure; the
-result is stored in `g_temp` (with `~` for the degree glyph). Like NTP, the
-fetch blocks core0 briefly but core1 keeps the panel refreshing.
+### Weather (outside temperature + min/max)
+
+`weather.c` fetches from **Open-Meteo over plain HTTP** (lwIP raw TCP, no TLS):
+`GET /v1/forecast?latitude=..&longitude=..&current=temperature_2m&daily=temperature_2m_max,temperature_2m_min`.
+The ~500-byte JSON gives current temp and today's max/min in one small response
+(wttr.in's j1 was rejected — its min/max sit ~14 KB into a 40 KB reply). The
+parser anchors on the `"current"`/`"daily"` objects (not the `*_units` strings)
+and reads the number after each key. Location is `WEATHER_LAT`/`WEATHER_LON`
+build defines (default Fleckney). The loop refreshes every
+`WEATHER_UPDATE_MINUTES`, retrying sooner on failure; results go to `g_temp`
+(`~` = degree) and `g_minmax` (`"14-22"`). Blocks core0 briefly; core1 keeps
+refreshing.
 
 ## lwIP configuration
 

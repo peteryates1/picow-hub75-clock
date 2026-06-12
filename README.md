@@ -58,11 +58,13 @@ appear on USB CDC.
 Timezone: build with `-DTZ_DST_UK=ON` for automatic UK BST/GMT switching, or
 `-DTZ_OFFSET_SECONDS=3600` for a fixed offset (no DST).
 
-Outside temperature is fetched from [wttr.in](https://wttr.in) over HTTP; set
-your location with `-DWEATHER_LOCATION=Fleckney` (a single token, no spaces).
+Outside temperature + today's min/max are fetched from
+[Open-Meteo](https://open-meteo.com) over HTTP; set your location with
+`-DWEATHER_LAT=52.52 -DWEATHER_LON=-1.00`.
 
-The display shows large `HH:MM` and the temperature on the top half, with the
-day and date (`MON 12 JUN`) across the bottom.
+The display shows a large antialiased `HH:MM` top-left, the current temperature
+with today's min/max top-right, and the date (`12 JUN 2026`) over the weekday
+name across the bottom.
 
 ### Bench testing on a Pico 2 W via debug probe
 

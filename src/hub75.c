@@ -5,13 +5,16 @@
 #include "hardware/gpio.h"
 
 // Colour depth used for Binary Code Modulation. The top HUB75_BCM_DEPTH bits
-// of each 8-bit channel are displayed. 4 bits (16 levels/channel) is plenty
-// for a clock face and keeps the per-frame work light on a bit-banged driver.
-#define HUB75_BCM_DEPTH  4
+// of each 8-bit channel are displayed. 6 bits (64 levels/channel) gives smooth
+// antialiased font edges; the LSB base time is shortened to match so overall
+// brightness and refresh rate stay close to the 4-bit version.
+#define HUB75_BCM_DEPTH  6
 
 // Base time (microseconds) the panel is lit for the least-significant bit
 // plane. Plane p is lit for (BCM_BASE_US << p), giving the binary weighting.
-#define BCM_BASE_US      8
+// Total per-row on-time is BCM_BASE_US*(2^DEPTH-1), so this is scaled down as
+// DEPTH grows to hold brightness roughly constant (~2*63 ≈ 8*15).
+#define BCM_BASE_US      2
 
 // Short delay (~tens of ns) inserted around the CLK/LAT edges so the panel's
 // shift registers see valid data-setup and clock-high times. Without it the

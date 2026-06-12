@@ -32,11 +32,15 @@
 #define NTP_SERVER       "pool.ntp.org"
 #define NTP_RESYNC_HOURS 6   // periodic re-sync interval
 
-// --- Weather (outside temperature via wttr.in) -----------------------------
-// Location passed to wttr.in (a single token; no spaces). Override at configure
-// time with -DWEATHER_LOCATION=Town.
-#ifndef WEATHER_LOCATION
-#define WEATHER_LOCATION "London"
+// --- Weather (outside temperature via Open-Meteo) --------------------------
+// Location as latitude/longitude strings (Open-Meteo takes coordinates).
+// Override at configure time with -DWEATHER_LAT=.. -DWEATHER_LON=..
+// Default: Fleckney, Leicestershire.
+#ifndef WEATHER_LAT
+#define WEATHER_LAT "52.52"
+#endif
+#ifndef WEATHER_LON
+#define WEATHER_LON "-1.00"
 #endif
 
 #define WEATHER_UPDATE_MINUTES 15   // how often to refresh the temperature

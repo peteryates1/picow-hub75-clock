@@ -64,10 +64,15 @@ elseif (DEFINED TZ_OFFSET_SECONDS)
     message(STATUS "TZ_OFFSET_SECONDS: ${TZ_OFFSET_SECONDS}")
 endif ()
 
-# Outside-temperature location for wttr.in. e.g. -DWEATHER_LOCATION=Fleckney
-if (DEFINED WEATHER_LOCATION)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE WEATHER_LOCATION=\"${WEATHER_LOCATION}\")
-    message(STATUS "Weather location: ${WEATHER_LOCATION}")
+# Outside-temperature location for Open-Meteo (coordinates).
+# e.g. -DWEATHER_LAT=52.52 -DWEATHER_LON=-1.00
+if (DEFINED WEATHER_LAT)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE WEATHER_LAT=\"${WEATHER_LAT}\")
+    message(STATUS "Weather lat: ${WEATHER_LAT}")
+endif ()
+if (DEFINED WEATHER_LON)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE WEATHER_LON=\"${WEATHER_LON}\")
+    message(STATUS "Weather lon: ${WEATHER_LON}")
 endif ()
 
 # Select the target hardware. Default is the real clock board; pass
