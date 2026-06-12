@@ -14,20 +14,69 @@ night). Pure C on the Pico SDK (2.2.0), no RTOS.
 ```sh
 export PICO_SDK_PATH=/home/peter/pico-sdk
 # Clock board (default):
-cmake -B build -DWIFI_SSID="ssid" -DWIFI_PASSWORD="pw"   # optionally -DTZ_OFFSET_SECONDS=3600
+cmake -B build                                          # optionally -DTZ_OFFSET_SECONDS=3600
 cmake --build build -j4
 # Control-panel test board:
-cmake -B build_cp -DWIFI_SSID="ssid" -DWIFI_PASSWORD="pw" -DTARGET_BOARD=control_panel
+cmake -B build_cp -DTARGET_BOARD=control_panel
 cmake --build build_cp -j4
 ```
 
 - Output: `build/picow_hub75_clock.uf2`. Flash by holding BOOTSEL, plugging in,
-  and copying the `.uf2` to the `RPI-RP2` drive.
+  and copying the `.uf2` to the `RPI-RP2` drive (or via SWD — see below).
 - `PICO_BOARD` is forced to `pico_w` in CMakeLists.txt **before** the SDK import
   — required or the `pico/cyw43_arch.h` headers won't be on the include path.
-- Wi-Fi credentials are compile-time `-D` defines, never committed. There is no
-  test suite; this is bare-metal firmware — "running it" means flashing hardware.
-- Logs go to **USB CDC serial** (`pico_enable_stdio_usb`), not UART.
+- **Wi-Fi credentials**: CMake reads them from an untracked `network.txt` in the
+  project root (`WIFI_SSID=...` / `WIFI_PASSWORD=...`), or from `-DWIFI_SSID=` /
+  `-DWIFI_PASSWORD=` on the command line, which take precedence. `network.txt` is
+  gitignored — never commit it. There is no test suite; this is bare-metal
+  firmware, so "running it" means flashing hardware.
+- Logs go to **USB CDC serial** (`pico_enable_stdio_usb`), not UART. The main
+  loop prints a periodic `[hb] wifi_link=… time=…` heartbeat so status is
+  observable without having to catch the one-shot boot logs.
+
+## Flashing & on-hardware testing (Pico 2 W + debug probe)
+
+The current **bench test board is a Pico 2 W (RP2350, Cortex-M33)** driven over
+SWD by a Raspberry Pi Debug Probe — *not* the RP2040 Pico W that the product
+clock PCB uses. The two are different architectures, so firmware must be built
+for the matching chip:
+
+```sh
+# Build for the RP2350 bench board (separate build dir):
+cmake -B build_pico2 -DPICO_BOARD=pico2_w
+cmake --build build_pico2 -j4
+```
+
+`pico_aon_timer` (not `hardware_rtc`) is used precisely so the same time code
+works on both: **RP2350 has no RTC peripheral**, so on that target the SDK
+transparently backs the AON timer with `hardware_powman`. Don't switch to
+`hardware/rtc.h` — it would break the RP2350 build.
+
+Flash and reset over SWD (the probe enumerates as USB `2e8a:000c`):
+
+```sh
+sudo openocd -f interface/cmsis-dap.cfg -f target/rp2350.cfg \
+  -c "adapter speed 1000" \
+  -c "program build_pico2/picow_hub75_clock.elf verify reset exit"
+```
+
+- Use `target/rp2350.cfg` for the Pico 2 W, `target/rp2040.cfg` for a real Pico
+  W. Wrong target ⇒ `Too long SWD WAIT` / `Failed to connect multidrop`.
+- `sudo` is currently required: the host user is not in the `plugdev` group, so
+  openocd can't open the probe's USB node otherwise. (Fix: add the user to
+  `plugdev` and re-login.)
+- Keep SWD at ~1000 kHz; 5000 kHz was unreliable on this rig.
+
+Read serial logs from the **target's** USB CDC (vendor `2e8a`, *not* the `000c`
+probe); the node moves around (`/dev/ttyACM*`) across re-enumerations, so pick it
+by vendor id. Opening it over USB CDC re-enumerates on reset, which makes the
+one-shot boot lines racy to catch — rely on the heartbeat instead, e.g.:
+
+```sh
+stty -F /dev/ttyACM1 raw -echo 115200
+timeout 20 cat /dev/ttyACM1
+# [hb] wifi_link=1  time=15:47:19   <- link=1 means joined; time matching host UTC means NTP worked
+```
 
 ## Architecture — the dual-core split is the key idea
 

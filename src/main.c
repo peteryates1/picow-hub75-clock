@@ -119,6 +119,7 @@ int main(void) {
 #if HAS_BUTTON
     bool button_prev = false;
 #endif
+    unsigned ticks = 0;
 
     for (;;) {
 #if HAS_LDR
@@ -154,6 +155,22 @@ int main(void) {
                     (uint32_t)NTP_RESYNC_HOURS * 3600 * 1000);
             else
                 next_resync = make_timeout_time_ms(60 * 1000);  // retry soon
+        }
+
+        // Heartbeat: periodic status on the serial console (~3s).
+        if (++ticks % 15 == 0) {
+            int link = cyw43_wifi_link_status(&cyw43_state, CYW43_ITF_STA);
+            if (aon_timer_is_running()) {
+                struct timespec hts;
+                aon_timer_get_time(&hts);
+                time_t local = hts.tv_sec + TZ_OFFSET_SECONDS;
+                struct tm t;
+                gmtime_r(&local, &t);
+                printf("[hb] wifi_link=%d  time=%02d:%02d:%02d\n",
+                       link, t.tm_hour, t.tm_min, t.tm_sec);
+            } else {
+                printf("[hb] wifi_link=%d  time=unset\n", link);
+            }
         }
 
         sleep_ms(200);

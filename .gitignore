@@ -1,5 +1,8 @@
 build/
 build_*/
+
+# Wi-Fi credentials -- never commit
+network.txt
 *.uf2
 *.bin
 *.hex

@@ -26,8 +26,27 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
-# Wi-Fi credentials are passed in at configure time, not committed.
-# Override with: cmake -DWIFI_SSID="net" -DWIFI_PASSWORD="pw" ..
+# Wi-Fi credentials. Provided either on the command line
+# (-DWIFI_SSID=... -DWIFI_PASSWORD=...) or, if not given, read from an
+# untracked network.txt in the project root with the form:
+#     WIFI_SSID=MyNetwork
+#     WIFI_PASSWORD=mypassword
+if ((NOT WIFI_SSID) AND EXISTS ${CMAKE_CURRENT_LIST_DIR}/network.txt)
+    file(STRINGS ${CMAKE_CURRENT_LIST_DIR}/network.txt _net_lines)
+    foreach (_line IN LISTS _net_lines)
+        if (_line MATCHES "^WIFI_SSID=(.*)")
+            set(WIFI_SSID "${CMAKE_MATCH_1}")
+        elseif (_line MATCHES "^WIFI_PASSWORD=(.*)")
+            set(WIFI_PASSWORD "${CMAKE_MATCH_1}")
+        endif ()
+    endforeach ()
+    message(STATUS "Wi-Fi credentials loaded from network.txt (SSID: ${WIFI_SSID})")
+endif ()
+
+if (NOT WIFI_SSID)
+    message(WARNING "No WIFI_SSID set: create network.txt or pass -DWIFI_SSID/-DWIFI_PASSWORD")
+endif ()
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     WIFI_SSID=\"${WIFI_SSID}\"
     WIFI_PASSWORD=\"${WIFI_PASSWORD}\"

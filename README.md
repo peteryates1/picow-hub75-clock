@@ -34,18 +34,47 @@ through a DMG2305 P-MOSFET.
 
 Requires the Pico SDK (2.2.0) and the ARM GNU toolchain.
 
+Put your Wi-Fi credentials in an untracked `network.txt` in the project root:
+
+```
+WIFI_SSID=yourssid
+WIFI_PASSWORD=yourpassword
+```
+
 ```sh
 export PICO_SDK_PATH=/home/peter/pico-sdk
-cmake -B build -DWIFI_SSID="yourssid" -DWIFI_PASSWORD="yourpassword"
+cmake -B build
 cmake --build build
 # For the control-panel test board, add: -DTARGET_BOARD=control_panel
 ```
+
+`network.txt` is gitignored. Credentials can also be passed with `-DWIFI_SSID=`
+/ `-DWIFI_PASSWORD=`, which override the file.
 
 Flash `build/picow_hub75_clock.uf2` by holding BOOTSEL while plugging in the
 Pico W, then copying the file to the `RPI-RP2` mass-storage device. Serial logs
 appear on USB CDC.
 
 Set your timezone with `-DTZ_OFFSET_SECONDS=3600` (no automatic DST).
+
+### Bench testing on a Pico 2 W via debug probe
+
+The original Pico W (RP2040) and the Pico 2 W (RP2350) are **different
+architectures**; build for whichever chip is connected. To test on a Pico 2 W
+over a Raspberry Pi Debug Probe:
+
+```sh
+cmake -B build_pico2 -DPICO_BOARD=pico2_w
+cmake --build build_pico2
+sudo openocd -f interface/cmsis-dap.cfg -f target/rp2350.cfg \
+  -c "adapter speed 1000" \
+  -c "program build_pico2/picow_hub75_clock.elf verify reset exit"
+```
+
+Then watch the target's USB-CDC serial (`/dev/ttyACM*`, vendor `2e8a`) for the
+`[hb] wifi_link=… time=…` heartbeat. See [CLAUDE.md](CLAUDE.md) for details
+(SWD target configs, permissions, why `pico_aon_timer` is used instead of the
+RP2040 RTC).
 
 ## Architecture
 
