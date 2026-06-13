@@ -86,6 +86,15 @@ mosquitto_pub -h 192.168.0.2 -t picow-clock/brightness/set -m 64
 mosquitto_pub -h 192.168.0.2 -t picow-clock/brightness/set -m auto
 ```
 
+Or use the bundled GUI (Tkinter, no extra dependencies — a built-in minimal
+MQTT publisher):
+
+```sh
+python3 tools/clock_control.py [broker_ip]   # default 192.168.0.2
+```
+
+It gives a brightness slider, an **Auto** button, and **On**/**Off** buttons.
+
 ### Bench testing on a Pico 2 W via debug probe
 
 The original Pico W (RP2040) and the Pico 2 W (RP2350) are **different
