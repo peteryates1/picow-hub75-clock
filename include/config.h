@@ -41,6 +41,14 @@
 #define NTP_SERVER       "pool.ntp.org"
 #define NTP_RESYNC_HOURS 6   // periodic re-sync interval
 
+// --- Time-of-day dimming (used on boards without a light sensor) -----------
+// Panel runs at BRIGHT_DAY during the day window and BRIGHT_NIGHT outside it.
+// Bright from START_HOUR (inclusive) to END_HOUR (exclusive), local time.
+#define BRIGHT_DAY            160
+#define BRIGHT_NIGHT          40
+#define BRIGHT_DAY_START_HOUR 8
+#define BRIGHT_DAY_END_HOUR   21
+
 // --- Weather (outside temperature via Open-Meteo) --------------------------
 // Location as latitude/longitude strings (Open-Meteo takes coordinates).
 // Override at configure time with -DWEATHER_LAT=.. -DWEATHER_LON=..

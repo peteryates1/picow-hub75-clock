@@ -367,6 +367,12 @@ int main(void) {
             time_t local = ts.tv_sec + local_offset(ts.tv_sec);
             struct tm t;
             gmtime_r(&local, &t);
+#if !HAS_LDR
+            // No light sensor: dim by time of day instead.
+            bool day = t.tm_hour >= BRIGHT_DAY_START_HOUR &&
+                       t.tm_hour <  BRIGHT_DAY_END_HOUR;
+            hub75_set_brightness(day ? BRIGHT_DAY : BRIGHT_NIGHT);
+#endif
             bool colon_on = (t.tm_sec & 1) == 0;  // 1 Hz blink
             draw_clock_face(&t, colon_on);
         } else {
