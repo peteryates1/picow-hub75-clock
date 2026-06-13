@@ -20,16 +20,16 @@
 // Still contiguous: GP8..GP13. Order within the block differs from the clock
 // board, captured by RGB_BIT_* below.
 //
-// NOTE: green/blue are swapped relative to the EasyEDA netlist net names. A
-// six-block colour test on the actual panel showed that the line the schematic
-// calls "G" drives the panel's blue and "B" drives green. These assignments are
-// the empirically-correct ones (red verified correct as-is).
-#define PIN_G2    8   // GP8  (netlist calls this B2)
-#define PIN_B2    9   // GP9  (netlist calls this G2)
-#define PIN_R2   10
-#define PIN_B1   11   // GP11 (netlist calls this G1)
-#define PIN_G1   12   // GP12 (netlist calls this B1)
-#define PIN_R1   13
+// Pin assignments follow the EasyEDA netlist net names. Note the Adafruit P2.5
+// 64x32 panel has its green/blue channels swapped vs standard HUB75 — that's a
+// panel property, handled in software by building with -DPANEL_SWAP_GB=ON, not
+// by mangling this pin map.
+#define PIN_B2    8   // GP8
+#define PIN_G2    9   // GP9
+#define PIN_R2   10   // GP10
+#define PIN_G1   11   // GP11
+#define PIN_B1   12   // GP12
+#define PIN_R1   13   // GP13
 
 #define RGB_BASE_PIN  8
 #define RGB_PIN_MASK  (0x3Fu << RGB_BASE_PIN)

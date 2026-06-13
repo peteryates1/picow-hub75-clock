@@ -82,16 +82,31 @@ static inline void hub75_set_row(int row) {
 
 // Pack the six RGB bits for a column (top + bottom pixel) into the GPIO
 // positions of the GP10..GP15 block, ready for a single masked write.
+// Some panels (e.g. the Adafruit P2.5 64x32) have green and blue swapped
+// relative to the standard HUB75 pinout. PANEL_SWAP_GB compensates in software,
+// so the board pin maps can stay faithful to the schematic.
+#ifdef PANEL_SWAP_GB
+#define BIT_G1 RGB_BIT_B1
+#define BIT_B1 RGB_BIT_G1
+#define BIT_G2 RGB_BIT_B2
+#define BIT_B2 RGB_BIT_G2
+#else
+#define BIT_G1 RGB_BIT_G1
+#define BIT_B1 RGB_BIT_B1
+#define BIT_G2 RGB_BIT_G2
+#define BIT_B2 RGB_BIT_B2
+#endif
+
 static inline uint32_t pack_column(int x, int top_y, int bot_y, int plane) {
     const uint8_t bit = (uint8_t)(8 - HUB75_BCM_DEPTH + plane);  // which source bit
     const uint8_t m = 1u << bit;
     uint32_t v = 0;
     if (fb[top_y][x][0] & m) v |= 1u << RGB_BIT_R1;
-    if (fb[top_y][x][1] & m) v |= 1u << RGB_BIT_G1;
-    if (fb[top_y][x][2] & m) v |= 1u << RGB_BIT_B1;
+    if (fb[top_y][x][1] & m) v |= 1u << BIT_G1;
+    if (fb[top_y][x][2] & m) v |= 1u << BIT_B1;
     if (fb[bot_y][x][0] & m) v |= 1u << RGB_BIT_R2;
-    if (fb[bot_y][x][1] & m) v |= 1u << RGB_BIT_G2;
-    if (fb[bot_y][x][2] & m) v |= 1u << RGB_BIT_B2;
+    if (fb[bot_y][x][1] & m) v |= 1u << BIT_G2;
+    if (fb[bot_y][x][2] & m) v |= 1u << BIT_B2;
     return v << RGB_BASE_PIN;
 }
 

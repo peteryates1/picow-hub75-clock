@@ -14,3 +14,7 @@ network.txt
 # Python
 __pycache__/
 *.pyc
+
+# Stray downloads
+*.whl
+*.dwg

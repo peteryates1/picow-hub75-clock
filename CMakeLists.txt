@@ -113,6 +113,13 @@ else ()
     message(STATUS "Target board: clock (default)")
 endif ()
 
+# Panels with green/blue swapped vs standard HUB75 (e.g. Adafruit P2.5 64x32):
+# -DPANEL_SWAP_GB=ON compensates in software.
+if (PANEL_SWAP_GB)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE PANEL_SWAP_GB)
+    message(STATUS "PANEL_SWAP_GB: ON (green/blue swapped)")
+endif ()
+
 # Bring-up diagnostic: -DDISPLAY_TEST_PATTERN=ON forces a full-screen HUB75
 # test pattern at full brightness and ignores Wi-Fi/NTP/clock.
 if (DISPLAY_TEST_PATTERN)
