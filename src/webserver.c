@@ -12,6 +12,10 @@
 static const char PAGE[] =
     "<!doctype html><html><head><meta charset=utf-8>"
     "<meta name=viewport content='width=device-width,initial-scale=1'>"
+    "<meta name=theme-color content='#000'>"
+    "<meta name=mobile-web-app-capable content=yes>"
+    "<meta name=apple-mobile-web-app-capable content=yes>"
+    "<meta name=apple-mobile-web-app-title content=Clock>"
     "<title>Pico Clock</title><style>"
     "body{font-family:sans-serif;max-width:420px;margin:18px auto;padding:0 14px}"
     "h2{font-size:1.2em}input[type=range]{width:100%}"
