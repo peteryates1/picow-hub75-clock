@@ -42,14 +42,24 @@ static char g_temp[12] = "--~";
 static char g_minmax[12] = "";
 
 // Brightness control via MQTT. g_power=false blanks the panel; g_bright_override
-// >=0 forces a level, -1 = automatic (LDR or time-of-day).
+// >=0 forces a level, -1 = automatic (LDR or time-of-day). The day/night levels
+// used by the time-of-day automatic mode are also adjustable at runtime.
 static volatile bool g_power = true;
 static volatile int  g_bright_override = -1;
+static volatile int  g_bright_day = BRIGHT_DAY;
+static volatile int  g_bright_night = BRIGHT_NIGHT;
+static volatile int  g_day_start = BRIGHT_DAY_START_HOUR;
+static volatile int  g_day_end = BRIGHT_DAY_END_HOUR;
 
-void mqtt_set_brightness(int value) {
-    g_bright_override = value < 0 ? -1 : (value > 255 ? 255 : value);
-}
+static int clamp255(int v) { return v < 0 ? 0 : (v > 255 ? 255 : v); }
+static int clamp_hour(int v) { return v < 0 ? 0 : (v > 23 ? 23 : v); }
+
+void mqtt_set_brightness(int value) { g_bright_override = value < 0 ? -1 : clamp255(value); }
 void mqtt_set_power(bool on) { g_power = on; }
+void mqtt_set_day_brightness(int v) { g_bright_day = clamp255(v); }
+void mqtt_set_night_brightness(int v) { g_bright_night = clamp255(v); }
+void mqtt_set_day_start(int h) { g_day_start = clamp_hour(h); }
+void mqtt_set_day_end(int h) { g_day_end = clamp_hour(h); }
 
 // Draw one 5x7 character at (x,y) with each pixel expanded to scale x scale.
 static void draw_char(int x, int y, char c, int scale,
@@ -318,9 +328,12 @@ static void apply_brightness(const struct tm *t) {
         b = ldr_brightness();
 #else
         if (t) {
-            bool day = t->tm_hour >= BRIGHT_DAY_START_HOUR &&
-                       t->tm_hour <  BRIGHT_DAY_END_HOUR;
-            b = day ? BRIGHT_DAY : BRIGHT_NIGHT;
+            // Day window is [start, end); handles a window crossing midnight.
+            int h = t->tm_hour;
+            bool day = (g_day_start <= g_day_end)
+                           ? (h >= g_day_start && h < g_day_end)
+                           : (h >= g_day_start || h < g_day_end);
+            b = (uint8_t)(day ? g_bright_day : g_bright_night);
         } else {
             b = DEFAULT_BRIGHTNESS;
         }

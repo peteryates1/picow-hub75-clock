@@ -16,5 +16,11 @@ bool mqtt_is_connected(void);
 void mqtt_set_brightness(int value);
 //   on: true = panel on, false = blank.
 void mqtt_set_power(bool on);
+//   day/night levels (0-255) used by the automatic time-of-day dimming.
+void mqtt_set_day_brightness(int value);
+void mqtt_set_night_brightness(int value);
+//   day-window start/end hour (0-23, local time).
+void mqtt_set_day_start(int hour);
+void mqtt_set_day_end(int hour);
 
 #endif // MQTT_H

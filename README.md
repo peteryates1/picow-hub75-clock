@@ -79,11 +79,22 @@ clock subscribes to:
 |-------|---------|--------|
 | `picow-clock/brightness/set` | `0`–`255` or `auto` | force brightness, or return to automatic |
 | `picow-clock/power/set` | `ON` / `OFF` | turn the panel on or blank it |
+| `picow-clock/day/set` | `0`–`255` | daytime brightness level (publish *retained*) |
+| `picow-clock/night/set` | `0`–`255` | night brightness level (publish *retained*) |
+| `picow-clock/day_start/set` | `0`–`23` | hour the day window starts (publish *retained*) |
+| `picow-clock/day_end/set` | `0`–`23` | hour the day window ends (publish *retained*) |
+
+The `day`/`night`/`day_start`/`day_end` settings configure the automatic
+time-of-day dimming; publish them **retained** (`-r`) so the broker remembers
+them and the clock re-applies them on every (re)connect — surviving reboots
+without writing flash.
 
 ```sh
 mosquitto_pub -h 192.168.0.2 -t picow-clock/power/set -m OFF
 mosquitto_pub -h 192.168.0.2 -t picow-clock/brightness/set -m 64
 mosquitto_pub -h 192.168.0.2 -t picow-clock/brightness/set -m auto
+mosquitto_pub -h 192.168.0.2 -t picow-clock/day/set   -m 200 -r
+mosquitto_pub -h 192.168.0.2 -t picow-clock/night/set -m 20  -r
 ```
 
 Or use the bundled GUI (Tkinter, no extra dependencies — a built-in minimal

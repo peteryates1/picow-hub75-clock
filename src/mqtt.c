@@ -10,8 +10,11 @@
 #include "lwip/apps/mqtt.h"
 #include "lwip/ip_addr.h"
 
-#define SUB_BRIGHTNESS  MQTT_TOPIC_PREFIX "/brightness/set"
-#define SUB_POWER       MQTT_TOPIC_PREFIX "/power/set"
+// One wildcard subscription covers every "<prefix>/<name>/set" control topic
+// (brightness, power, day, night, day_start, day_end). Subscribing to each
+// separately risks exhausting lwIP's in-flight request pool, dropping the later
+// ones; the incoming handler routes by topic name.
+#define SUB_ALL  MQTT_TOPIC_PREFIX "/+/set"
 
 static mqtt_client_t  *s_client;
 static ip_addr_t       s_broker;
@@ -45,6 +48,18 @@ static void incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags)
                   strncasecmp(buf, "true", 4) == 0;
         mqtt_set_power(on);
         printf("MQTT: power <- '%s'\n", buf);
+    } else if (strstr(s_topic, "day_start")) {
+        mqtt_set_day_start(atoi(buf));
+        printf("MQTT: day_start <- '%s'\n", buf);
+    } else if (strstr(s_topic, "day_end")) {
+        mqtt_set_day_end(atoi(buf));
+        printf("MQTT: day_end <- '%s'\n", buf);
+    } else if (strstr(s_topic, "day/set")) {
+        mqtt_set_day_brightness(atoi(buf));
+        printf("MQTT: day <- '%s'\n", buf);
+    } else if (strstr(s_topic, "night/set")) {
+        mqtt_set_night_brightness(atoi(buf));
+        printf("MQTT: night <- '%s'\n", buf);
     }
 }
 
@@ -60,9 +75,8 @@ static void connection_cb(mqtt_client_t *client, void *arg,
     if (status == MQTT_CONNECT_ACCEPTED) {
         s_connected = true;
         mqtt_set_inpub_callback(client, incoming_publish_cb, incoming_data_cb, NULL);
-        mqtt_subscribe(client, SUB_BRIGHTNESS, 0, sub_request_cb, NULL);
-        mqtt_subscribe(client, SUB_POWER, 0, sub_request_cb, NULL);
-        printf("MQTT: connected to %s, subscribed\n", MQTT_BROKER_IP);
+        err_t e = mqtt_subscribe(client, SUB_ALL, 0, sub_request_cb, NULL);
+        printf("MQTT: connected to %s, subscribe(%s)=%d\n", MQTT_BROKER_IP, SUB_ALL, e);
     } else {
         s_connected = false;
         printf("MQTT: connection lost/refused (%d)\n", status);

@@ -207,16 +207,24 @@ refreshing.
 ### MQTT (brightness / power control)
 
 `mqtt.c` uses the lwIP MQTT app (`pico_lwip_mqtt`) to connect anonymously to a
-broker at `MQTT_BROKER_IP` (default `192.168.0.2`, override with `-D`) and
-subscribe to two topics under `MQTT_TOPIC_PREFIX` (`picow-clock`):
-- `…/brightness/set` — `0`–`255`, or `auto` to clear the override
-- `…/power/set` — `ON`/`OFF` (blanks the panel)
+broker at `MQTT_BROKER_IP` (default `192.168.0.2`, override with `-D`). It makes
+**one wildcard subscription** `<prefix>/+/set` (subscribing to each topic
+separately can exhaust lwIP's in-flight request pool and silently drop the later
+ones); the incoming handler routes by topic name:
+- `brightness/set` — `0`–`255`, or `auto` to clear the override (transient)
+- `power/set` — `ON`/`OFF` (transient)
+- `day/set`, `night/set` — automatic day/night levels (publish **retained**)
+- `day_start/set`, `day_end/set` — day-window hours 0–23 (publish **retained**)
 
-Incoming callbacks (lwIP context) call `mqtt_set_brightness()`/`mqtt_set_power()`
-in `main.c`, which set `g_bright_override` / `g_power`. `mqtt_poll()` (called on
-a 10 s timer) reconnects after a drop. Works concurrently with NTP/weather since
-the threadsafe-background stack services lwIP from an IRQ even while those
-blocking fetches run.
+Incoming callbacks (lwIP context) call the `mqtt_set_*()` functions in `main.c`,
+which set `g_power` / `g_bright_override` / `g_bright_day` / `g_bright_night` /
+`g_day_start` / `g_day_end`. The schedule values are published retained, so the
+broker re-delivers them on every connect — runtime config that survives reboots
+without flash writes. `mqtt_poll()` (10 s timer) reconnects after a drop; MQTT
+runs concurrently with NTP/weather (lwIP serviced from an IRQ).
+
+`tools/clock_control.py` is a dependency-free Tkinter GUI (built-in minimal MQTT
+publisher) exposing all of the above, publishing the schedule settings retained.
 
 ### Brightness model
 
