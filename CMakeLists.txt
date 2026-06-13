@@ -22,6 +22,7 @@ add_executable(${PROJECT_NAME}
     src/ntp.c
     src/weather.c
     src/mqtt.c
+    src/webserver.c
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -46,9 +47,27 @@ if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/network.txt)
             set(WIFI_SSID_BACKUP "${CMAKE_MATCH_1}")
         elseif (_line MATCHES "^WIFI_PASSWORD_BACKUP=(.*)" AND NOT DEFINED WIFI_PASSWORD_BACKUP)
             set(WIFI_PASSWORD_BACKUP "${CMAKE_MATCH_1}")
+        elseif (_line MATCHES "^STATIC_IP=(.*)" AND NOT DEFINED STATIC_IP)
+            set(STATIC_IP "${CMAKE_MATCH_1}")
+        elseif (_line MATCHES "^GATEWAY=(.*)" AND NOT DEFINED GATEWAY)
+            set(GATEWAY "${CMAKE_MATCH_1}")
+        elseif (_line MATCHES "^NETMASK=(.*)" AND NOT DEFINED NETMASK)
+            set(NETMASK "${CMAKE_MATCH_1}")
         endif ()
     endforeach ()
     message(STATUS "Wi-Fi: primary '${WIFI_SSID}', backup '${WIFI_SSID_BACKUP}'")
+endif ()
+
+# Optional static IP (else DHCP). NETMASK defaults to a /24.
+if (STATIC_IP)
+    if (NOT NETMASK)
+        set(NETMASK "255.255.255.0")
+    endif ()
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        STATIC_IP=\"${STATIC_IP}\"
+        STATIC_GW=\"${GATEWAY}\"
+        STATIC_MASK=\"${NETMASK}\")
+    message(STATUS "Static IP: ${STATIC_IP} gw ${GATEWAY} mask ${NETMASK}")
 endif ()
 
 if (NOT WIFI_SSID AND NOT WIFI_SSID_BACKUP)

@@ -13,8 +13,14 @@
 #include "ntp.h"
 #include "weather.h"
 #include "mqtt.h"
+#include "control.h"
+#include "webserver.h"
 #include "font.h"
 #include "font_large.h"
+
+#include "lwip/dhcp.h"
+#include "lwip/dns.h"
+#include "lwip/netif.h"
 
 // Colours (full-scale; the LDR/brightness control dims the whole panel).
 #define TIME_R 0
@@ -54,12 +60,21 @@ static volatile int  g_day_end = BRIGHT_DAY_END_HOUR;
 static int clamp255(int v) { return v < 0 ? 0 : (v > 255 ? 255 : v); }
 static int clamp_hour(int v) { return v < 0 ? 0 : (v > 23 ? 23 : v); }
 
-void mqtt_set_brightness(int value) { g_bright_override = value < 0 ? -1 : clamp255(value); }
-void mqtt_set_power(bool on) { g_power = on; }
-void mqtt_set_day_brightness(int v) { g_bright_day = clamp255(v); }
-void mqtt_set_night_brightness(int v) { g_bright_night = clamp255(v); }
-void mqtt_set_day_start(int h) { g_day_start = clamp_hour(h); }
-void mqtt_set_day_end(int h) { g_day_end = clamp_hour(h); }
+void control_set_brightness(int value) { g_bright_override = value < 0 ? -1 : clamp255(value); }
+void control_set_power(bool on) { g_power = on; }
+void control_set_day(int v) { g_bright_day = clamp255(v); }
+void control_set_night(int v) { g_bright_night = clamp255(v); }
+void control_set_day_start(int h) { g_day_start = clamp_hour(h); }
+void control_set_day_end(int h) { g_day_end = clamp_hour(h); }
+
+bool control_power(void) { return g_power; }
+int  control_override(void) { return g_bright_override; }
+int  control_day(void) { return g_bright_day; }
+int  control_night(void) { return g_bright_night; }
+int  control_day_start(void) { return g_day_start; }
+int  control_day_end(void) { return g_day_end; }
+const char *control_temp(void) { return g_temp; }
+const char *control_minmax(void) { return g_minmax; }
 
 // Draw one 5x7 character at (x,y) with each pixel expanded to scale x scale.
 static void draw_char(int x, int y, char c, int scale,
@@ -299,6 +314,31 @@ static bool wifi_connect(void) {
            wifi_try(WIFI_SSID_BACKUP, WIFI_PASSWORD_BACKUP);
 }
 
+// If STATIC_IP is configured, switch the STA interface off DHCP onto it and
+// point DNS at the gateway (with a public fallback) so NTP/weather still work.
+static void apply_static_ip(void) {
+    if (!STATIC_IP[0]) return;
+    ip4_addr_t ip, mask, gw;
+    if (!ip4addr_aton(STATIC_IP, &ip)) { printf("Bad STATIC_IP\n"); return; }
+    ip4addr_aton(STATIC_MASK, &mask);
+    ip4addr_aton(STATIC_GW, &gw);
+    struct netif *n = &cyw43_state.netif[CYW43_ITF_STA];
+
+    cyw43_arch_lwip_begin();
+    dhcp_stop(n);
+    netif_set_addr(n, &ip, &mask, &gw);
+    ip_addr_t dns;
+    if (STATIC_GW[0] && ipaddr_aton(STATIC_GW, &dns)) dns_setserver(0, &dns);
+    if (ipaddr_aton("1.1.1.1", &dns)) dns_setserver(1, &dns);  // fallback
+    cyw43_arch_lwip_end();
+    printf("Static IP %s / gw %s\n", STATIC_IP, STATIC_GW);
+}
+
+static void report_ip(void) {
+    struct netif *n = &cyw43_state.netif[CYW43_ITF_STA];
+    printf("IP: %s\n", ip4addr_ntoa(netif_ip4_addr(n)));
+}
+
 // Connect Wi-Fi, fetch NTP time, and set the RTC. Returns true on success.
 static bool sync_time_from_ntp(void) {
     time_t epoch;
@@ -369,9 +409,12 @@ int main(void) {
     // Connect (primary, then backup). If both fail the display still runs; the
     // loop retries the connection periodically.
     wifi_connect();
+    apply_static_ip();   // no-op unless STATIC_IP is configured
+    report_ip();
 
-    // MQTT control client (reconnects via mqtt_poll if it drops).
-    mqtt_start();
+    // Control services.
+    mqtt_start();        // reconnects via mqtt_poll if it drops
+    webserver_init();    // control web page on :80
 
     // Now safe to launch the display refresh on core1.
     hub75_init();

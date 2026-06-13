@@ -43,6 +43,10 @@ WIFI_SSID=PrimaryNet
 WIFI_PASSWORD=primarypass
 WIFI_SSID_BACKUP=BackupNet
 WIFI_PASSWORD_BACKUP=backuppass
+# Optional static IP (omit for DHCP):
+STATIC_IP=192.168.0.50
+GATEWAY=192.168.0.1
+NETMASK=255.255.255.0
 ```
 
 ```sh
@@ -69,6 +73,20 @@ Outside temperature + today's min/max are fetched from
 The display shows a large antialiased `HH:MM` top-left, the current temperature
 with today's min/max top-right, and the date (`12 JUN 2026`) over the weekday
 name across the bottom.
+
+## Web control page
+
+The device serves a small control page on port 80 — just browse to its IP
+(set a `STATIC_IP` in `network.txt` for a predictable address; otherwise the
+DHCP address is printed to the serial log at boot):
+
+```
+http://192.168.0.50/
+```
+
+It has a brightness slider, Auto/On/Off buttons, day/night level sliders and the
+schedule hours. Endpoints: `GET /state` (JSON), `GET /set?bri=…&power=…&day=…&
+night=…&start=…&end=…&auto=1`. No app required.
 
 ## MQTT control
 

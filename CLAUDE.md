@@ -226,6 +226,21 @@ runs concurrently with NTP/weather (lwIP serviced from an IRQ).
 `tools/clock_control.py` is a dependency-free Tkinter GUI (built-in minimal MQTT
 publisher) exposing all of the above, publishing the schedule settings retained.
 
+### Web control page + static IP
+
+`webserver.c` is a tiny HTTP server on port 80 (lwIP raw TCP, one connection at
+a time, HTTP/1.0-style close). `GET /` serves an embedded HTML+JS page; `GET
+/state` returns the control state as JSON; `GET /set?...` applies query params
+(`bri`, `auto=1`, `power`, `day`, `night`, `start`, `end`). It and MQTT both go
+through the shared **`control.h`** API (`control_set_*` / getters) implemented in
+`main.c` — that's the single source of truth for the control state, not MQTT.
+
+Static IP is optional, from `network.txt` (`STATIC_IP`/`GATEWAY`/`NETMASK`,
+parsed by CMake into `STATIC_IP`/`STATIC_GW`/`STATIC_MASK`). `apply_static_ip()`
+runs after Wi-Fi connect: `dhcp_stop()` + `netif_set_addr()`, and points DNS at
+the gateway (+ `1.1.1.1` fallback) so NTP/weather still resolve. Empty
+`STATIC_IP` ⇒ DHCP. The boot log prints the resulting IP.
+
 ### Brightness model
 
 `apply_brightness()` (called every loop tick) resolves brightness in priority

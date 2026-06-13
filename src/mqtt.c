@@ -1,4 +1,5 @@
 #include "mqtt.h"
+#include "control.h"
 #include "config.h"
 
 #include <stdio.h>
@@ -39,26 +40,26 @@ static void incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags)
 
     if (strstr(s_topic, "brightness/set")) {
         if (strncasecmp(buf, "auto", 4) == 0)
-            mqtt_set_brightness(-1);
+            control_set_brightness(-1);
         else
-            mqtt_set_brightness(atoi(buf));
+            control_set_brightness(atoi(buf));
         printf("MQTT: brightness <- '%s'\n", buf);
     } else if (strstr(s_topic, "power/set")) {
         bool on = strncasecmp(buf, "ON", 2) == 0 || buf[0] == '1' ||
                   strncasecmp(buf, "true", 4) == 0;
-        mqtt_set_power(on);
+        control_set_power(on);
         printf("MQTT: power <- '%s'\n", buf);
     } else if (strstr(s_topic, "day_start")) {
-        mqtt_set_day_start(atoi(buf));
+        control_set_day_start(atoi(buf));
         printf("MQTT: day_start <- '%s'\n", buf);
     } else if (strstr(s_topic, "day_end")) {
-        mqtt_set_day_end(atoi(buf));
+        control_set_day_end(atoi(buf));
         printf("MQTT: day_end <- '%s'\n", buf);
     } else if (strstr(s_topic, "day/set")) {
-        mqtt_set_day_brightness(atoi(buf));
+        control_set_day(atoi(buf));
         printf("MQTT: day <- '%s'\n", buf);
     } else if (strstr(s_topic, "night/set")) {
-        mqtt_set_night_brightness(atoi(buf));
+        control_set_night(atoi(buf));
         printf("MQTT: night <- '%s'\n", buf);
     }
 }

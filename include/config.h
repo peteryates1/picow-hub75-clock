@@ -31,6 +31,19 @@
 #define WIFI_PASSWORD_BACKUP ""
 #endif
 
+// Optional static IP (from network.txt: STATIC_IP/GATEWAY/NETMASK). Empty
+// STATIC_IP => DHCP. When set, DNS is pointed at the gateway (+ a public
+// fallback) so NTP/weather still resolve.
+#ifndef STATIC_IP
+#define STATIC_IP ""
+#endif
+#ifndef STATIC_GW
+#define STATIC_GW ""
+#endif
+#ifndef STATIC_MASK
+#define STATIC_MASK "255.255.255.0"
+#endif
+
 // --- Clock / time (common) -------------------------------------------------
 // Local time offset from UTC in seconds (no automatic DST handling).
 // Example: UK winter = 0, UK summer (BST) = 3600.
