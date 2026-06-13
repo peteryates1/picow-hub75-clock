@@ -15,6 +15,8 @@
 #define MEMP_NUM_TCP_SEG            32
 #define MEMP_NUM_ARP_QUEUE          10
 #define PBUF_POOL_SIZE              16
+// Headroom for the MQTT client's keepalive timer (on top of the stack's own).
+#define MEMP_NUM_SYS_TIMEOUT        10
 
 #define LWIP_ARP                    1
 #define LWIP_ETHERNET               1

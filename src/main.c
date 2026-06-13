@@ -12,6 +12,7 @@
 #include "ldr.h"
 #include "ntp.h"
 #include "weather.h"
+#include "mqtt.h"
 #include "font.h"
 #include "font_large.h"
 
@@ -39,6 +40,16 @@ static const char *const MONTH[12] = {"JAN","FEB","MAR","APR","MAY","JUN",
 static char g_temp[12] = "--~";
 // Today's forecast min/max, e.g. "12-19"; empty until fetched.
 static char g_minmax[12] = "";
+
+// Brightness control via MQTT. g_power=false blanks the panel; g_bright_override
+// >=0 forces a level, -1 = automatic (LDR or time-of-day).
+static volatile bool g_power = true;
+static volatile int  g_bright_override = -1;
+
+void mqtt_set_brightness(int value) {
+    g_bright_override = value < 0 ? -1 : (value > 255 ? 255 : value);
+}
+void mqtt_set_power(bool on) { g_power = on; }
 
 // Draw one 5x7 character at (x,y) with each pixel expanded to scale x scale.
 static void draw_char(int x, int y, char c, int scale,
@@ -293,6 +304,31 @@ static bool sync_time_from_ntp(void) {
     return true;
 }
 
+// Decide and set the panel brightness. MQTT power/override win; otherwise it's
+// automatic: the LDR if the board has one, else time-of-day (t may be NULL).
+static void apply_brightness(const struct tm *t) {
+    uint8_t b;
+    if (!g_power) {
+        b = 0;
+    } else if (g_bright_override >= 0) {
+        b = (uint8_t)g_bright_override;
+    } else {
+#if HAS_LDR
+        (void)t;
+        b = ldr_brightness();
+#else
+        if (t) {
+            bool day = t->tm_hour >= BRIGHT_DAY_START_HOUR &&
+                       t->tm_hour <  BRIGHT_DAY_END_HOUR;
+            b = day ? BRIGHT_DAY : BRIGHT_NIGHT;
+        } else {
+            b = DEFAULT_BRIGHTNESS;
+        }
+#endif
+    }
+    hub75_set_brightness(b);
+}
+
 int main(void) {
     stdio_init_all();
 
@@ -321,6 +357,9 @@ int main(void) {
     // loop retries the connection periodically.
     wifi_connect();
 
+    // MQTT control client (reconnects via mqtt_poll if it drops).
+    mqtt_start();
+
     // Now safe to launch the display refresh on core1.
     hub75_init();
     hub75_set_brightness(DEFAULT_BRIGHTNESS);
@@ -338,17 +377,13 @@ int main(void) {
     absolute_time_t next_resync = get_absolute_time();
     absolute_time_t next_weather = make_timeout_time_ms(3000);  // shortly after boot
     absolute_time_t next_wifi_check = make_timeout_time_ms(30000);
+    absolute_time_t next_mqtt = make_timeout_time_ms(5000);
 #if HAS_BUTTON
     bool button_prev = false;
 #endif
     unsigned ticks = 0;
 
     for (;;) {
-#if HAS_LDR
-        // Auto-brightness from ambient light.
-        hub75_set_brightness(ldr_brightness());
-#endif
-
 #if HAS_BUTTON
         // Button forces an immediate NTP re-sync.
         if (button_pressed(&button_prev)) {
@@ -362,17 +397,15 @@ int main(void) {
         // Draw the time once the clock is set; until then show the bring-up
         // test pattern so the panel is never blank.
         struct timespec ts;
-        if (aon_timer_is_running()) {
+        struct tm t;
+        bool have_time = aon_timer_is_running();
+        if (have_time) {
             aon_timer_get_time(&ts);
             time_t local = ts.tv_sec + local_offset(ts.tv_sec);
-            struct tm t;
             gmtime_r(&local, &t);
-#if !HAS_LDR
-            // No light sensor: dim by time of day instead.
-            bool day = t.tm_hour >= BRIGHT_DAY_START_HOUR &&
-                       t.tm_hour <  BRIGHT_DAY_END_HOUR;
-            hub75_set_brightness(day ? BRIGHT_DAY : BRIGHT_NIGHT);
-#endif
+        }
+        apply_brightness(have_time ? &t : NULL);
+        if (have_time) {
             bool colon_on = (t.tm_sec & 1) == 0;  // 1 Hz blink
             draw_clock_face(&t, colon_on);
         } else {
@@ -386,6 +419,12 @@ int main(void) {
                 wifi_connect();
             }
             next_wifi_check = make_timeout_time_ms(30 * 1000);
+        }
+
+        // MQTT: reconnect if needed.
+        if (absolute_time_diff_us(get_absolute_time(), next_mqtt) <= 0) {
+            mqtt_poll();
+            next_mqtt = make_timeout_time_ms(10 * 1000);
         }
 
         // NTP sync: full interval once the clock is set, quick retry until it
@@ -424,12 +463,13 @@ int main(void) {
                 time_t local = hts.tv_sec + local_offset(hts.tv_sec);
                 struct tm t;
                 gmtime_r(&local, &t);
-                printf("[hb] core1=%d frames=%u net=%s link=%d time=%02d:%02d:%02d temp=%s mm=%s\n",
-                       core1, frames, g_wifi_name, link, t.tm_hour, t.tm_min, t.tm_sec,
-                       g_temp, g_minmax[0] ? g_minmax : "-");
+                printf("[hb] core1=%d frames=%u net=%s link=%d mqtt=%d time=%02d:%02d:%02d temp=%s mm=%s\n",
+                       core1, frames, g_wifi_name, link, mqtt_is_connected(),
+                       t.tm_hour, t.tm_min, t.tm_sec, g_temp, g_minmax[0] ? g_minmax : "-");
             } else {
-                printf("[hb] core1=%d frames=%u net=%s link=%d time=unset temp=%s mm=%s\n",
-                       core1, frames, g_wifi_name, link, g_temp, g_minmax[0] ? g_minmax : "-");
+                printf("[hb] core1=%d frames=%u net=%s link=%d mqtt=%d time=unset temp=%s mm=%s\n",
+                       core1, frames, g_wifi_name, link, mqtt_is_connected(),
+                       g_temp, g_minmax[0] ? g_minmax : "-");
             }
         }
 

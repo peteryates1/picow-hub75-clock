@@ -62,4 +62,16 @@
 
 #define WEATHER_UPDATE_MINUTES 15   // how often to refresh the temperature
 
+// --- MQTT (brightness/power control) ---------------------------------------
+// Anonymous connection to a broker on the LAN. Override the IP with
+// -DMQTT_BROKER_IP=... at configure time.
+#ifndef MQTT_BROKER_IP
+#define MQTT_BROKER_IP "192.168.0.2"
+#endif
+#define MQTT_BROKER_PORT  1883
+#define MQTT_CLIENT_ID    "picow-clock"
+#define MQTT_TOPIC_PREFIX "picow-clock"
+// Subscribed topics: <prefix>/brightness/set  (0-255 or "auto")
+//                    <prefix>/power/set        ("ON"/"OFF")
+
 #endif // CONFIG_H

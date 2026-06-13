@@ -70,6 +70,22 @@ The display shows a large antialiased `HH:MM` top-left, the current temperature
 with today's min/max top-right, and the date (`12 JUN 2026`) over the weekday
 name across the bottom.
 
+## MQTT control
+
+If a broker is reachable (set `-DMQTT_BROKER_IP=192.168.0.2`, anonymous), the
+clock subscribes to:
+
+| Topic | Payload | Effect |
+|-------|---------|--------|
+| `picow-clock/brightness/set` | `0`–`255` or `auto` | force brightness, or return to automatic |
+| `picow-clock/power/set` | `ON` / `OFF` | turn the panel on or blank it |
+
+```sh
+mosquitto_pub -h 192.168.0.2 -t picow-clock/power/set -m OFF
+mosquitto_pub -h 192.168.0.2 -t picow-clock/brightness/set -m 64
+mosquitto_pub -h 192.168.0.2 -t picow-clock/brightness/set -m auto
+```
+
 ### Bench testing on a Pico 2 W via debug probe
 
 The original Pico W (RP2040) and the Pico 2 W (RP2350) are **different

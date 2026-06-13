@@ -204,6 +204,28 @@ build defines (default Fleckney). The loop refreshes every
 (`~` = degree) and `g_minmax` (`"14-22"`). Blocks core0 briefly; core1 keeps
 refreshing.
 
+### MQTT (brightness / power control)
+
+`mqtt.c` uses the lwIP MQTT app (`pico_lwip_mqtt`) to connect anonymously to a
+broker at `MQTT_BROKER_IP` (default `192.168.0.2`, override with `-D`) and
+subscribe to two topics under `MQTT_TOPIC_PREFIX` (`picow-clock`):
+- `…/brightness/set` — `0`–`255`, or `auto` to clear the override
+- `…/power/set` — `ON`/`OFF` (blanks the panel)
+
+Incoming callbacks (lwIP context) call `mqtt_set_brightness()`/`mqtt_set_power()`
+in `main.c`, which set `g_bright_override` / `g_power`. `mqtt_poll()` (called on
+a 10 s timer) reconnects after a drop. Works concurrently with NTP/weather since
+the threadsafe-background stack services lwIP from an IRQ even while those
+blocking fetches run.
+
+### Brightness model
+
+`apply_brightness()` (called every loop tick) resolves brightness in priority
+order: **MQTT power-off → MQTT override → automatic**. Automatic is the LDR on
+boards with `HAS_LDR`, otherwise time-of-day (`BRIGHT_DAY`/`BRIGHT_NIGHT` between
+`BRIGHT_DAY_START_HOUR`/`END_HOUR`, local time). `hub75_set_brightness()` scales
+the BCM on-time.
+
 ## lwIP configuration
 
 `include/lwipopts.h` configures the threadsafe-background cyw43 stack (DHCP +
