@@ -33,6 +33,7 @@ static void incoming_publish_cb(void *arg, const char *topic, u32_t tot_len) {
 
 static void incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags) {
     (void)arg; (void)flags;
+    if (len == 0) return;   // ignore empty payloads (e.g. a retained-clear)
     char buf[24];
     u16_t n = len < sizeof buf - 1 ? len : sizeof buf - 1;
     memcpy(buf, data, n);

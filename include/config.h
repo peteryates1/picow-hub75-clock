@@ -59,7 +59,7 @@
 // Bright from START_HOUR (inclusive) to END_HOUR (exclusive), local time.
 #define BRIGHT_DAY            160
 #define BRIGHT_NIGHT          40
-#define BRIGHT_DAY_START_HOUR 8
+#define BRIGHT_DAY_START_HOUR 9
 #define BRIGHT_DAY_END_HOUR   21
 
 // --- Weather (outside temperature via Open-Meteo) --------------------------
