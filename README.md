@@ -131,7 +131,8 @@ architectures**; build for whichever chip is connected. To test on a Pico 2 W
 over a Raspberry Pi Debug Probe:
 
 ```sh
-cmake -B build_pico2 -DPICO_BOARD=pico2_w
+cmake -B build_pico2 -DPICO_BOARD=pico2_w -DTARGET_BOARD=control_panel \
+      -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON
 cmake --build build_pico2
 sudo openocd -f interface/cmsis-dap.cfg -f target/rp2350.cfg \
   -c "adapter speed 1000" \

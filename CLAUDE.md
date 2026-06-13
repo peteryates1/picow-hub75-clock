@@ -44,10 +44,14 @@ clock PCB uses. The two are different architectures, so firmware must be built
 for the matching chip:
 
 ```sh
-# Build for the RP2350 bench board (separate build dir):
-cmake -B build_pico2 -DPICO_BOARD=pico2_w
+# Build for the RP2350 bench board (separate build dir). The Adafruit P2.5
+# 64x32 panel has green/blue swapped, so add -DPANEL_SWAP_GB=ON:
+cmake -B build_pico2 -DPICO_BOARD=pico2_w -DTARGET_BOARD=control_panel \
+      -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON
 cmake --build build_pico2 -j4
 ```
+
+Panel mounting holes are **M3**.
 
 `pico_aon_timer` (not `hardware_rtc`) is used precisely so the same time code
 works on both: **RP2350 has no RTC peripheral**, so on that target the SDK
