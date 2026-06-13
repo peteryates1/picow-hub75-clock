@@ -26,10 +26,12 @@ cmake --build build_cp -j4
 - `PICO_BOARD` is forced to `pico_w` in CMakeLists.txt **before** the SDK import
   — required or the `pico/cyw43_arch.h` headers won't be on the include path.
 - **Wi-Fi credentials**: CMake reads them from an untracked `network.txt` in the
-  project root (`WIFI_SSID=...` / `WIFI_PASSWORD=...`), or from `-DWIFI_SSID=` /
-  `-DWIFI_PASSWORD=` on the command line, which take precedence. `network.txt` is
-  gitignored — never commit it. There is no test suite; this is bare-metal
-  firmware, so "running it" means flashing hardware.
+  project root (`WIFI_SSID`/`WIFI_PASSWORD`, plus optional
+  `WIFI_SSID_BACKUP`/`WIFI_PASSWORD_BACKUP`), or from the matching `-D` flags
+  which take precedence. The firmware prefers the primary, falls back to the
+  backup (`wifi_connect()`/`wifi_try()` in `main.c`), and the loop reconnects if
+  the link drops. `network.txt` is gitignored — never commit it. There is no
+  test suite; this is bare-metal firmware, so "running it" means flashing hardware.
 - Logs go to **USB CDC serial** (`pico_enable_stdio_usb`), not UART. The main
   loop prints a periodic `[hb] wifi_link=… time=…` heartbeat so status is
   observable without having to catch the one-shot boot logs.

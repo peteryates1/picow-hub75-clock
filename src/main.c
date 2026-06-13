@@ -255,6 +255,29 @@ static bool button_pressed(bool *prev_pressed) {
 }
 #endif // HAS_BUTTON
 
+// Name of the network we're currently associated with ("-" if none).
+static const char *g_wifi_name = "-";
+
+// Associate with one network. An empty SSID is skipped (no backup configured).
+static bool wifi_try(const char *ssid, const char *pass) {
+    if (!ssid || !ssid[0]) return false;
+    printf("Wi-Fi: connecting to '%s'...\n", ssid);
+    if (cyw43_arch_wifi_connect_timeout_ms(ssid, pass,
+                                           CYW43_AUTH_WPA2_AES_PSK, 20000)) {
+        printf("Wi-Fi: '%s' failed\n", ssid);
+        return false;
+    }
+    printf("Wi-Fi: connected to '%s'\n", ssid);
+    g_wifi_name = ssid;
+    return true;
+}
+
+// Connect, preferring the primary network and falling back to the backup.
+static bool wifi_connect(void) {
+    return wifi_try(WIFI_SSID, WIFI_PASSWORD) ||
+           wifi_try(WIFI_SSID_BACKUP, WIFI_PASSWORD_BACKUP);
+}
+
 // Connect Wi-Fi, fetch NTP time, and set the RTC. Returns true on success.
 static bool sync_time_from_ntp(void) {
     time_t epoch;
@@ -294,14 +317,9 @@ int main(void) {
     }
     cyw43_arch_enable_sta_mode();
 
-    printf("Connecting to Wi-Fi '%s'...\n", WIFI_SSID);
-    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD,
-                                           CYW43_AUTH_WPA2_AES_PSK, 30000)) {
-        printf("Wi-Fi connect failed\n");
-        // Keep running: the display works, the time is just unset.
-    } else {
-        printf("Wi-Fi connected\n");
-    }
+    // Connect (primary, then backup). If both fail the display still runs; the
+    // loop retries the connection periodically.
+    wifi_connect();
 
     // Now safe to launch the display refresh on core1.
     hub75_init();
@@ -319,6 +337,7 @@ int main(void) {
     // waiting a full re-sync interval.
     absolute_time_t next_resync = get_absolute_time();
     absolute_time_t next_weather = make_timeout_time_ms(3000);  // shortly after boot
+    absolute_time_t next_wifi_check = make_timeout_time_ms(30000);
 #if HAS_BUTTON
     bool button_prev = false;
 #endif
@@ -352,6 +371,15 @@ int main(void) {
             draw_clock_face(&t, colon_on);
         } else {
             draw_test_pattern();
+        }
+
+        // Reconnect if the Wi-Fi link has dropped (prefers the primary again).
+        if (absolute_time_diff_us(get_absolute_time(), next_wifi_check) <= 0) {
+            if (cyw43_wifi_link_status(&cyw43_state, CYW43_ITF_STA) <= CYW43_LINK_DOWN) {
+                printf("Wi-Fi: link down, reconnecting\n");
+                wifi_connect();
+            }
+            next_wifi_check = make_timeout_time_ms(30 * 1000);
         }
 
         // NTP sync: full interval once the clock is set, quick retry until it
@@ -390,12 +418,12 @@ int main(void) {
                 time_t local = hts.tv_sec + local_offset(hts.tv_sec);
                 struct tm t;
                 gmtime_r(&local, &t);
-                printf("[hb] core1=%d frames=%u wifi_link=%d time=%02d:%02d:%02d temp=%s mm=%s\n",
-                       core1, frames, link, t.tm_hour, t.tm_min, t.tm_sec,
+                printf("[hb] core1=%d frames=%u net=%s link=%d time=%02d:%02d:%02d temp=%s mm=%s\n",
+                       core1, frames, g_wifi_name, link, t.tm_hour, t.tm_min, t.tm_sec,
                        g_temp, g_minmax[0] ? g_minmax : "-");
             } else {
-                printf("[hb] core1=%d frames=%u wifi_link=%d time=unset temp=%s mm=%s\n",
-                       core1, frames, link, g_temp, g_minmax[0] ? g_minmax : "-");
+                printf("[hb] core1=%d frames=%u net=%s link=%d time=unset temp=%s mm=%s\n",
+                       core1, frames, g_wifi_name, link, g_temp, g_minmax[0] ? g_minmax : "-");
             }
         }
 

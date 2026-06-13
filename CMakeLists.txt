@@ -27,30 +27,38 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
-# Wi-Fi credentials. Provided either on the command line
-# (-DWIFI_SSID=... -DWIFI_PASSWORD=...) or, if not given, read from an
-# untracked network.txt in the project root with the form:
-#     WIFI_SSID=MyNetwork
-#     WIFI_PASSWORD=mypassword
-if ((NOT WIFI_SSID) AND EXISTS ${CMAKE_CURRENT_LIST_DIR}/network.txt)
+# Wi-Fi credentials: a primary network and an optional backup. From -D flags,
+# else read from an untracked network.txt in the project root:
+#     WIFI_SSID=PrimaryNet
+#     WIFI_PASSWORD=primarypass
+#     WIFI_SSID_BACKUP=BackupNet
+#     WIFI_PASSWORD_BACKUP=backuppass
+# (-D values take precedence; the backup pair may be omitted.)
+if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/network.txt)
     file(STRINGS ${CMAKE_CURRENT_LIST_DIR}/network.txt _net_lines)
     foreach (_line IN LISTS _net_lines)
-        if (_line MATCHES "^WIFI_SSID=(.*)")
+        if (_line MATCHES "^WIFI_SSID=(.*)" AND NOT DEFINED WIFI_SSID)
             set(WIFI_SSID "${CMAKE_MATCH_1}")
-        elseif (_line MATCHES "^WIFI_PASSWORD=(.*)")
+        elseif (_line MATCHES "^WIFI_PASSWORD=(.*)" AND NOT DEFINED WIFI_PASSWORD)
             set(WIFI_PASSWORD "${CMAKE_MATCH_1}")
+        elseif (_line MATCHES "^WIFI_SSID_BACKUP=(.*)" AND NOT DEFINED WIFI_SSID_BACKUP)
+            set(WIFI_SSID_BACKUP "${CMAKE_MATCH_1}")
+        elseif (_line MATCHES "^WIFI_PASSWORD_BACKUP=(.*)" AND NOT DEFINED WIFI_PASSWORD_BACKUP)
+            set(WIFI_PASSWORD_BACKUP "${CMAKE_MATCH_1}")
         endif ()
     endforeach ()
-    message(STATUS "Wi-Fi credentials loaded from network.txt (SSID: ${WIFI_SSID})")
+    message(STATUS "Wi-Fi: primary '${WIFI_SSID}', backup '${WIFI_SSID_BACKUP}'")
 endif ()
 
-if (NOT WIFI_SSID)
-    message(WARNING "No WIFI_SSID set: create network.txt or pass -DWIFI_SSID/-DWIFI_PASSWORD")
+if (NOT WIFI_SSID AND NOT WIFI_SSID_BACKUP)
+    message(WARNING "No Wi-Fi SSID set: create network.txt or pass -DWIFI_SSID/-DWIFI_PASSWORD")
 endif ()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     WIFI_SSID=\"${WIFI_SSID}\"
     WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+    WIFI_SSID_BACKUP=\"${WIFI_SSID_BACKUP}\"
+    WIFI_PASSWORD_BACKUP=\"${WIFI_PASSWORD_BACKUP}\"
 )
 
 # Timezone. Either a fixed offset (-DTZ_OFFSET_SECONDS=3600), or automatic UK

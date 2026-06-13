@@ -22,6 +22,15 @@
 // 64x32 panels are 1/16 scan: address lines A..D select 16 row-pairs.
 #define PANEL_SCAN_ROWS (PANEL_HEIGHT / 2)   // 16
 
+// --- Wi-Fi (credentials come from CMake/network.txt) -----------------------
+// Backup network is optional; default to empty so it's simply skipped.
+#ifndef WIFI_SSID_BACKUP
+#define WIFI_SSID_BACKUP ""
+#endif
+#ifndef WIFI_PASSWORD_BACKUP
+#define WIFI_PASSWORD_BACKUP ""
+#endif
+
 // --- Clock / time (common) -------------------------------------------------
 // Local time offset from UTC in seconds (no automatic DST handling).
 // Example: UK winter = 0, UK summer (BST) = 3600.

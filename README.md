@@ -34,11 +34,15 @@ through a DMG2305 P-MOSFET.
 
 Requires the Pico SDK (2.2.0) and the ARM GNU toolchain.
 
-Put your Wi-Fi credentials in an untracked `network.txt` in the project root:
+Put your Wi-Fi credentials in an untracked `network.txt` in the project root. A
+backup network is optional; the clock prefers the primary, falls back to the
+backup, and reconnects to whichever is available if the link drops:
 
 ```
-WIFI_SSID=yourssid
-WIFI_PASSWORD=yourpassword
+WIFI_SSID=PrimaryNet
+WIFI_PASSWORD=primarypass
+WIFI_SSID_BACKUP=BackupNet
+WIFI_PASSWORD_BACKUP=backuppass
 ```
 
 ```sh
@@ -49,7 +53,7 @@ cmake --build build
 ```
 
 `network.txt` is gitignored. Credentials can also be passed with `-DWIFI_SSID=`
-/ `-DWIFI_PASSWORD=`, which override the file.
+/ `-DWIFI_PASSWORD=` (and the `_BACKUP` variants), which override the file.
 
 Flash `build/picow_hub75_clock.uf2` by holding BOOTSEL while plugging in the
 Pico W, then copying the file to the `RPI-RP2` mass-storage device. Serial logs
