@@ -44,8 +44,11 @@ static const char *const MONTH[12] = {"JAN","FEB","MAR","APR","MAY","JUN",
 // Latest outside temperature as a printable string; '~' renders as the degree
 // glyph. "--~" until the first weather fetch lands.
 static char g_temp[12] = "--~";
-// Today's forecast min/max, e.g. "12-19"; empty until fetched.
+// Forecast string shown under the temperature; order/contents depend on the
+// time of day (see build_minmax). Empty until the first fetch.
 static char g_minmax[12] = "";
+static volatile bool g_fc_valid = false;
+static volatile int  g_today_min, g_today_max, g_tom_min, g_tom_max;
 
 // Brightness control via MQTT. g_power=false blanks the panel; g_bright_override
 // >=0 forces a level, -1 = automatic (LDR or time-of-day). The day/night levels
@@ -382,6 +385,25 @@ static void apply_brightness(const struct tm *t) {
     hub75_set_brightness(b);
 }
 
+// Build the forecast string shown under the temperature, chosen by time of day:
+//   daytime (day window):  today's high / tonight's low
+//   evening (after day):   tonight's low / tomorrow's high
+//   early morning:         tonight's low / today's high
+// "tonight's low" is tomorrow's pre-dawn minimum (and today's minimum once we're
+// past midnight). High-first by day, low-first at night, as requested.
+static void build_minmax(const struct tm *t) {
+    if (!g_fc_valid) { g_minmax[0] = '\0'; return; }
+    int h = t->tm_hour, a, b;
+    if (h >= g_day_start && h < g_day_end) {
+        a = g_today_max; b = g_tom_min;     // today high / tonight low
+    } else if (h >= g_day_end) {
+        a = g_tom_min;   b = g_tom_max;     // tonight low / tomorrow high
+    } else {
+        a = g_today_min; b = g_today_max;   // tonight low / today high
+    }
+    snprintf(g_minmax, sizeof g_minmax, "%d/%d", a, b);
+}
+
 int main(void) {
     stdio_init_all();
 
@@ -462,6 +484,7 @@ int main(void) {
         }
         apply_brightness(have_time ? &t : NULL);
         if (have_time) {
+            build_minmax(&t);
             bool colon_on = (t.tm_sec & 1) == 0;  // 1 Hz blink
             draw_clock_face(&t, colon_on);
         } else {
@@ -494,12 +517,15 @@ int main(void) {
         // Outside temperature from wttr.in: refresh periodically, retry sooner
         // on failure. core1 keeps refreshing the panel while this blocks.
         if (absolute_time_diff_us(get_absolute_time(), next_weather) <= 0) {
-            int cur, mn = -999, mx = -999;
-            if (weather_fetch(&cur, &mn, &mx, 8000)) {
-                snprintf(g_temp, sizeof g_temp, "%d~", cur);
-                if (mn > -999 && mx > -999)
-                    snprintf(g_minmax, sizeof g_minmax, "%d/%d", mn, mx);
-                printf("Weather: %d C (min %d max %d)\n", cur, mn, mx);
+            weather_t w;
+            if (weather_fetch(&w, 8000)) {
+                snprintf(g_temp, sizeof g_temp, "%d~", w.current);
+                g_today_min = w.today_min;    g_today_max = w.today_max;
+                g_tom_min   = w.tomorrow_min; g_tom_max   = w.tomorrow_max;
+                g_fc_valid  = true;
+                printf("Weather: %d C  today %d/%d  tomorrow %d/%d\n",
+                       w.current, w.today_min, w.today_max,
+                       w.tomorrow_min, w.tomorrow_max);
                 next_weather = make_timeout_time_ms(
                     (uint32_t)WEATHER_UPDATE_MINUTES * 60 * 1000);
             } else {

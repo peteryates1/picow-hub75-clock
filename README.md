@@ -66,7 +66,8 @@ appear on USB CDC.
 Timezone: build with `-DTZ_DST_UK=ON` for automatic UK BST/GMT switching, or
 `-DTZ_OFFSET_SECONDS=3600` for a fixed offset (no DST).
 
-Outside temperature + today's min/max are fetched from
+Outside temperature plus a time-aware forecast (today's high / tonight's low by
+day; tonight's low / tomorrow's high in the evening) are fetched from
 [Open-Meteo](https://open-meteo.com) over HTTP; set your location with
 `-DWEATHER_LAT=52.52 -DWEATHER_LON=-1.00`.
 

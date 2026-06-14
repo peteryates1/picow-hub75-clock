@@ -195,14 +195,16 @@ half. `draw_char`/`draw_text` do scalable 5×7 text with per-character advances
 (narrow `-`/`:`/space/`~`). Cleared and redrawn each 200 ms on core0; before the
 clock is set it shows the bring-up test pattern.
 
-### Weather (outside temperature + min/max)
+### Weather (outside temperature + time-aware forecast)
 
 `weather.c` fetches from **Open-Meteo over plain HTTP** (lwIP raw TCP, no TLS):
 `GET /v1/forecast?latitude=..&longitude=..&current=temperature_2m&daily=temperature_2m_max,temperature_2m_min`.
 The ~500-byte JSON gives current temp and today's max/min in one small response
-(wttr.in's j1 was rejected — its min/max sit ~14 KB into a 40 KB reply). The
-parser anchors on the `"current"`/`"daily"` objects (not the `*_units` strings)
-and reads the number after each key. Location is `WEATHER_LAT`/`WEATHER_LON`
+(wttr.in's j1 was rejected — its min/max sit ~14 KB into a 40 KB reply). It
+requests `forecast_days=2` (today + tomorrow) and the parser anchors on the
+`"current"`/`"daily"` objects (not the `*_units` strings), reading the daily
+`[today, tomorrow]` arrays. `build_minmax()` in `main.c` then picks which
+pair/order to show by time of day (today-high/tonight-low by day, etc.). Location is `WEATHER_LAT`/`WEATHER_LON`
 build defines (default Fleckney). The loop refreshes every
 `WEATHER_UPDATE_MINUTES`, retrying sooner on failure; results go to `g_temp`
 (`~` = degree) and `g_minmax` (`"14-22"`). Blocks core0 briefly; core1 keeps

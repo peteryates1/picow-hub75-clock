@@ -41,7 +41,7 @@ static const char PAGE[] =
     "function set(s){bri.value=s.override<0?s.day:s.override;bv.textContent=bri.value;"
     "day.value=s.day;dv.textContent=s.day;night.value=s.night;nv.textContent=s.night;"
     "ds.value=s.start;de.value=s.end;"
-    "st.textContent='Outside '+s.temp.replace('~','\\u00b0')+' (min/max '+s.minmax+')'}"
+    "st.textContent='Outside '+s.temp.replace('~','\\u00b0')+' (forecast '+s.minmax+')'}"
     "bri.oninput=()=>bv.textContent=bri.value;bri.onchange=()=>g('/set?bri='+bri.value);"
     "day.oninput=()=>dv.textContent=day.value;day.onchange=()=>g('/set?day='+day.value);"
     "night.oninput=()=>nv.textContent=night.value;night.onchange=()=>g('/set?night='+night.value);"

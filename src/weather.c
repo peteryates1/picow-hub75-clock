@@ -54,7 +54,7 @@ static err_t on_connected(void *arg, struct tcp_pcb *pcb, err_t err) {
                      "&longitude=" WEATHER_LON
                      "&current=temperature_2m"
                      "&daily=temperature_2m_max,temperature_2m_min"
-                     "&timezone=GMT&forecast_days=1 HTTP/1.1\r\n"
+                     "&timezone=auto&forecast_days=2 HTTP/1.1\r\n"
                      "Host: " WEATHER_HOST "\r\n"
                      "User-Agent: curl/8.0\r\n"
                      "Connection: close\r\n\r\n");
@@ -90,24 +90,44 @@ static void dns_cb(const char *name, const ip_addr_t *addr, void *arg) {
     start_connect(c);    // in lwIP callback context
 }
 
-// Find `token` in `s`, then parse the number immediately after it (skipping a
-// leading '[' for array values), rounding to the nearest int. The value must
-// start right after the token (after spaces/'['), so it won't accidentally read
-// a "..._units":"°C" string field. Returns false if not found/not numeric.
+static int round_i(double v) { return (int)(v < 0 ? v - 0.5 : v + 0.5); }
+static bool is_num(char c) { return c == '-' || (c >= '0' && c <= '9'); }
+
+// Parse the (rounded) number right after `token` (skipping spaces and a leading
+// '[' for arrays). Must start with a digit/'-' so it won't read a "_units":"°C"
+// string. Returns false if not found.
 static bool num_after(const char *s, const char *token, int *out) {
     const char *p = strstr(s, token);
     if (!p) return false;
     p += strlen(token);
     while (*p == ' ' || *p == '[') p++;
-    if (*p != '-' && !(*p >= '0' && *p <= '9')) return false;
-    double v = atof(p);
-    *out = (int)(v < 0 ? v - 0.5 : v + 0.5);
+    if (!is_num(*p)) return false;
+    *out = round_i(atof(p));
     return true;
 }
 
-bool weather_fetch(int *out_current, int *out_min, int *out_max,
-                   uint32_t timeout_ms) {
-    static weather_ctx_t c;   // keep the 512-byte buffer off the stack
+// Like num_after but for a 2-element array "[a,b]": fills *a and *b (*b = *a if
+// only one element is present).
+static bool nums2_after(const char *s, const char *token, int *a, int *b) {
+    const char *p = strstr(s, token);
+    if (!p) return false;
+    p += strlen(token);
+    while (*p == ' ' || *p == '[') p++;
+    if (!is_num(*p)) return false;
+    *a = round_i(atof(p));
+    *b = *a;
+    const char *comma = strchr(p, ',');
+    const char *end = strchr(p, ']');
+    if (comma && (!end || comma < end)) {
+        const char *q = comma + 1;
+        while (*q == ' ') q++;
+        if (is_num(*q)) *b = round_i(atof(q));
+    }
+    return true;
+}
+
+bool weather_fetch(weather_t *out, uint32_t timeout_ms) {
+    static weather_ctx_t c;   // keep the response buffer off the stack
     memset(&c, 0, sizeof c);
 
     cyw43_arch_lwip_begin();
@@ -135,12 +155,13 @@ bool weather_fetch(int *out_current, int *out_min, int *out_max,
 
     c.resp[c.resp_len] = '\0';
     // Anchor on the "current"/"daily" data objects so we read the numeric
-    // values, not the matching "current_units"/"daily_units" strings.
+    // values, not the matching "current_units"/"daily_units" strings. The daily
+    // arrays hold [today, tomorrow].
     const char *daily = strstr(c.resp, "\"daily\":");
     if (daily) {
-        if (out_min) num_after(daily, "\"temperature_2m_min\":", out_min);
-        if (out_max) num_after(daily, "\"temperature_2m_max\":", out_max);
+        nums2_after(daily, "\"temperature_2m_min\":", &out->today_min, &out->tomorrow_min);
+        nums2_after(daily, "\"temperature_2m_max\":", &out->today_max, &out->tomorrow_max);
     }
     const char *cur = strstr(c.resp, "\"current\":");
-    return cur && num_after(cur, "\"temperature_2m\":", out_current);
+    return cur && num_after(cur, "\"temperature_2m\":", &out->current);
 }
