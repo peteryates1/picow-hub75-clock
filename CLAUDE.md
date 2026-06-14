@@ -181,19 +181,25 @@ runs at the fixed `DEFAULT_BRIGHTNESS` with no light sensing.
 
 Fonts:
 - `font.h` — 5×7 font (digits, A–Z, `:`, space, `-`, `~`=degree) via
-  `font_glyph()`, plus a tiny 3×5 digit/dash font for the min/max line.
+  `font_glyph()`, plus a tiny 3×5 digit/dash/slash font for the forecast line.
 - `font_large.h` — **antialiased grayscale** large digits + colon, *generated*
   by `tools/genfont.py` (rasterises DejaVu Sans Condensed at a fixed size with
   Pillow; one byte/pixel = brightness). Regenerate with
   `python3 tools/genfont.py > src/font_large.h`. `draw_glyph_aa()` scales the
   draw colour by each pixel's value, so the 6-bit BCM gives smooth edges.
+- `icons.h` — six 10×10 palette-indexed colour weather icons (sun, partly,
+  cloud, rain, snow, storm) + `wx_from_code()` mapping a WMO code to one.
 
 `draw_clock_face()` lays out: large antialiased `HH:MM` top-left (1 Hz blinking
-colon), current temperature top-right with today's min/max (`14-22`, tiny font)
-under it, and `DD MON YYYY` over the full weekday name centred on the bottom
-half. `draw_char`/`draw_text` do scalable 5×7 text with per-character advances
-(narrow `-`/`:`/space/`~`). Cleared and redrawn each 200 ms on core0; before the
-clock is set it shows the bring-up test pattern.
+colon); top-right the current temperature with the forecast (`19/9`, tiny font)
+under it and a current-conditions weather icon below that; the **day name
+left-aligned** on the upper bottom line with the icon tucked in the gap at its
+right, and `DD MON YYYY` centred on the lower line. `draw_char`/`draw_text` do
+scalable 5×7 text with per-character advances (narrow `-`/`:`/space/`~`); the
+forecast's `-` and `/` are also narrowed so 2-digit negatives like `-3/-12`
+still fit. Cleared and redrawn each 200 ms on core0; before the clock is set it
+shows the bring-up test pattern. `-DICON_DEMO=ON` cycles all icons (and shows
+WEDNESDAY + negative-temp examples) for layout checks.
 
 ### Weather (outside temperature + time-aware forecast)
 

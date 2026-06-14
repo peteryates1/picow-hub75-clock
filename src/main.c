@@ -17,6 +17,7 @@
 #include "webserver.h"
 #include "font.h"
 #include "font_large.h"
+#include "icons.h"
 
 #include "lwip/dhcp.h"
 #include "lwip/dns.h"
@@ -49,6 +50,7 @@ static char g_temp[12] = "--~";
 static char g_minmax[12] = "";
 static volatile bool g_fc_valid = false;
 static volatile int  g_today_min, g_today_max, g_tom_min, g_tom_max;
+static volatile int  g_wcode = -1;   // current WMO weather code (-1 = unknown)
 
 // Brightness control via MQTT. g_power=false blanks the panel; g_bright_override
 // >=0 forces a level, -1 = automatic (LDR or time-of-day). The day/night levels
@@ -129,17 +131,34 @@ static void draw_tiny_char(int x, int y, char c, uint8_t r, uint8_t g, uint8_t b
                 hub75_set_pixel(x + rx, y + ry, r, g, b);
 }
 
+// Per-glyph advance: dash and slash 3px (narrow), digits 4px.
+static int tiny_advance(char c) {
+    if (c == '-' || c == '/') return 3;
+    return TINY_W + 1;
+}
+
 static int tiny_width(const char *s) {
     int w = 0;
-    for (; *s; s++) w += (*s == '-') ? 3 : (TINY_W + 1);
+    for (; *s; s++) w += tiny_advance(*s);
     return w ? w - 1 : 0;
 }
 
 static void draw_tiny(int x, int y, const char *s, uint8_t r, uint8_t g, uint8_t b) {
     for (; *s; s++) {
         draw_tiny_char(x, y, *s, r, g, b);
-        x += (*s == '-') ? 3 : (TINY_W + 1);
+        x += tiny_advance(*s);
     }
+}
+
+// Draw a 10x10 palette-indexed weather icon at (x,y).
+static void draw_icon(int x, int y, wx_icon_t icon) {
+    for (int r = 0; r < ICON_H; r++)
+        for (int c = 0; c < ICON_W; c++) {
+            uint8_t p = WX_ICONS[icon][r][c];
+            if (!p) continue;
+            hub75_set_pixel(x + c, y + r,
+                            ICON_PALETTE[p][0], ICON_PALETTE[p][1], ICON_PALETTE[p][2]);
+        }
 }
 
 // Draw a string left-to-right using per-character advances.
@@ -179,34 +198,52 @@ static void draw_clock_face(const struct tm *t, bool colon_on) {
     draw_glyph_aa(x, ty, &FONT_LARGE_DIGITS[d[2]][0][0], gw, gh, TIME_R, TIME_G, TIME_B); x += gw + 1;
     draw_glyph_aa(x, ty, &FONT_LARGE_DIGITS[d[3]][0][0], gw, gh, TIME_R, TIME_G, TIME_B);
 
-    // Temperature: scale 1, top-right, right-aligned but kept clear of the time.
-    int tw = text_width(g_temp, 1);
-    int tx = PANEL_WIDTH - tw;
-    if (tx < 48) tx = 48;
-    draw_text(tx, 0, g_temp, 1, TEMP_R, TEMP_G, TEMP_B);
+    // Temperature (top-right) + forecast (tiny, below it). In demo mode, cycle
+    // negative examples to check width/rendering.
+#ifdef ICON_DEMO
+    static const char *const demo_t[]  = {"-3~", "-9~", "-12~", "6~"};
+    static const char *const demo_mm[] = {"8/-2", "-2/-9", "2/-12", "-3/-12"};
+    int di = (t->tm_sec / 3) % 4;
+    const char *temp_str = demo_t[di];
+    const char *mm_str   = demo_mm[di];
+#else
+    const char *temp_str = g_temp;
+    const char *mm_str   = g_minmax[0] ? g_minmax : NULL;
+#endif
 
-    // Today's min/max forecast, tiny font, right-aligned under the temperature.
-    if (g_minmax[0]) {
-        int mw = tiny_width(g_minmax);
+    // Right-aligned, kept just clear of the time (which ends at x42).
+    int tw = text_width(temp_str, 1);
+    int tx = PANEL_WIDTH - tw;
+    if (tx < 44) tx = 44;
+    draw_text(tx, 0, temp_str, 1, TEMP_R, TEMP_G, TEMP_B);
+
+    if (mm_str) {
+        int mw = tiny_width(mm_str);
         int mmx = PANEL_WIDTH - mw;
         if (mmx < 44) mmx = 44;
-        draw_tiny(mmx, 9, g_minmax, FC_R, FC_G, FC_B);
+        draw_tiny(mmx, 8, mm_str, FC_R, FC_G, FC_B);
     }
 
-    // Bottom half: two centred lines — numeric date, then the full day name.
+    // Current-conditions icon, bottom-right, in the gap past the day name.
+#ifdef ICON_DEMO
+    draw_icon(PANEL_WIDTH - ICON_W, 14, (wx_icon_t)((t->tm_sec / 2) % WX_COUNT));
+    const char *day = "WEDNESDAY";   // longest day, to check the gap
+#else
+    if (g_wcode >= 0)
+        draw_icon(PANEL_WIDTH - ICON_W, 14, wx_from_code(g_wcode));
+    const char *day = WDAY_FULL[t->tm_wday];
+#endif
+
+    // Bottom half: day name left-aligned on top, numeric date centred below.
+    draw_text(0, PANEL_SCAN_ROWS + 1, day, 1, DATE_R, DATE_G, DATE_B);
+
     char date[16];
     snprintf(date, sizeof date, "%02d %s %04d",
              t->tm_mday, MONTH[t->tm_mon], t->tm_year + 1900);
-    int dw1 = text_width(date, 1);
-    int dx1 = (PANEL_WIDTH - dw1) / 2;
-    if (dx1 < 0) dx1 = 0;
-    draw_text(dx1, PANEL_SCAN_ROWS + 1, date, 1, DATE_R, DATE_G, DATE_B);
-
-    const char *day = WDAY_FULL[t->tm_wday];
-    int dw2 = text_width(day, 1);
-    int dx2 = (PANEL_WIDTH - dw2) / 2;
-    if (dx2 < 0) dx2 = 0;
-    draw_text(dx2, PANEL_SCAN_ROWS + 9, day, 1, DATE_R, DATE_G, DATE_B);
+    int dw = text_width(date, 1);
+    int dx = (PANEL_WIDTH - dw) / 2;
+    if (dx < 0) dx = 0;
+    draw_text(dx, PANEL_SCAN_ROWS + 9, date, 1, DATE_R, DATE_G, DATE_B);
 }
 
 static void draw_block(int x0, int y0, uint8_t r, uint8_t g, uint8_t b) {
@@ -522,9 +559,10 @@ int main(void) {
                 snprintf(g_temp, sizeof g_temp, "%d~", w.current);
                 g_today_min = w.today_min;    g_today_max = w.today_max;
                 g_tom_min   = w.tomorrow_min; g_tom_max   = w.tomorrow_max;
+                g_wcode     = w.condition;
                 g_fc_valid  = true;
-                printf("Weather: %d C  today %d/%d  tomorrow %d/%d\n",
-                       w.current, w.today_min, w.today_max,
+                printf("Weather: %d C  code %d  today %d/%d  tomorrow %d/%d\n",
+                       w.current, w.condition, w.today_min, w.today_max,
                        w.tomorrow_min, w.tomorrow_max);
                 next_weather = make_timeout_time_ms(
                     (uint32_t)WEATHER_UPDATE_MINUTES * 60 * 1000);

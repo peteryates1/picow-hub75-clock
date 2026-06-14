@@ -120,6 +120,13 @@ if (PANEL_SWAP_GB)
     message(STATUS "PANEL_SWAP_GB: ON (green/blue swapped)")
 endif ()
 
+# Icon demo: -DICON_DEMO=ON cycles all weather icons (2s each) and shows the day
+# as WEDNESDAY, to check the icons and the longest-day gap.
+if (ICON_DEMO)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ICON_DEMO)
+    message(STATUS "ICON_DEMO: ON")
+endif ()
+
 # Bring-up diagnostic: -DDISPLAY_TEST_PATTERN=ON forces a full-screen HUB75
 # test pattern at full brightness and ignores Wi-Fi/NTP/clock.
 if (DISPLAY_TEST_PATTERN)

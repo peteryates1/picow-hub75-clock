@@ -8,6 +8,7 @@
 // degrees Celsius), from Open-Meteo over plain HTTP for WEATHER_LAT/WEATHER_LON.
 typedef struct {
     int current;
+    int condition;   // WMO weather code for the current conditions (-1 if absent)
     int today_min, today_max;
     int tomorrow_min, tomorrow_max;
 } weather_t;

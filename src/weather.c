@@ -52,7 +52,7 @@ static err_t on_connected(void *arg, struct tcp_pcb *pcb, err_t err) {
     int n = snprintf(req, sizeof req,
                      "GET /v1/forecast?latitude=" WEATHER_LAT
                      "&longitude=" WEATHER_LON
-                     "&current=temperature_2m"
+                     "&current=temperature_2m,weather_code"
                      "&daily=temperature_2m_max,temperature_2m_min"
                      "&timezone=auto&forecast_days=2 HTTP/1.1\r\n"
                      "Host: " WEATHER_HOST "\r\n"
@@ -163,5 +163,7 @@ bool weather_fetch(weather_t *out, uint32_t timeout_ms) {
         nums2_after(daily, "\"temperature_2m_max\":", &out->today_max, &out->tomorrow_max);
     }
     const char *cur = strstr(c.resp, "\"current\":");
+    out->condition = -1;
+    if (cur) num_after(cur, "\"weather_code\":", &out->condition);
     return cur && num_after(cur, "\"temperature_2m\":", &out->current);
 }
