@@ -16,6 +16,15 @@
 #include "board_clock.h"
 #endif
 
+// --- System clock ----------------------------------------------------------
+// Overclock for a higher (bit-banged) panel refresh rate -> less flicker,
+// especially on the RP2040 (default 125 MHz). 200 MHz runs fine at the default
+// core voltage on both RP2040 and RP2350; the cycle-based dimming reads the
+// live clock so it self-adjusts.
+#ifndef SYS_CLOCK_KHZ
+#define SYS_CLOCK_KHZ 200000
+#endif
+
 // --- HUB75 panel geometry (common) -----------------------------------------
 #define PANEL_WIDTH     64
 #define PANEL_HEIGHT    32

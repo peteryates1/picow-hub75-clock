@@ -19,6 +19,7 @@
 #include "font_large.h"
 #include "icons.h"
 
+#include "hardware/clocks.h"
 #include "lwip/dhcp.h"
 #include "lwip/dns.h"
 #include "lwip/netif.h"
@@ -442,6 +443,7 @@ static void build_minmax(const struct tm *t) {
 }
 
 int main(void) {
+    set_sys_clock_khz(SYS_CLOCK_KHZ, true);   // overclock before peripherals
     stdio_init_all();
 
 #ifdef DISPLAY_TEST_PATTERN
