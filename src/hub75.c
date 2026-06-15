@@ -3,6 +3,7 @@
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
+#include "hardware/clocks.h"
 
 // Colour depth used for Binary Code Modulation. The top HUB75_BCM_DEPTH bits
 // of each 8-bit channel are displayed. 6 bits (64 levels/channel) gives smooth
@@ -10,10 +11,9 @@
 // brightness and refresh rate stay close to the 4-bit version.
 #define HUB75_BCM_DEPTH  6
 
-// Base time (microseconds) the panel is lit for the least-significant bit
-// plane. Plane p is lit for (BCM_BASE_US << p), giving the binary weighting.
-// Total per-row on-time is BCM_BASE_US*(2^DEPTH-1), so this is scaled down as
-// DEPTH grows to hold brightness roughly constant (~2*63 ≈ 8*15).
+// Base on-time for the least-significant bit plane, in microseconds (converted
+// to CPU cycles at runtime — see base_cyc). Plane p is lit for (base << p),
+// giving the binary weighting. Total per-row on-time is base*(2^DEPTH-1).
 #define BCM_BASE_US      2
 
 // Short delay (~tens of ns) inserted around the CLK/LAT edges so the panel's
@@ -117,11 +117,18 @@ static void hub75_refresh_loop(void) {
     multicore_lockout_victim_init();
     g_core1_alive = true;
 
+    // OE on-time is measured in CPU cycles rather than microseconds so dim
+    // levels can drop below 1us. busy_wait_us_32's 1us granularity was the old
+    // brightness floor: with integer division only brightness >= 4 kept the top
+    // plane's on-time non-zero. base_cyc is the same physical base time
+    // (BCM_BASE_US) expressed in cycles, so day/normal brightness is unchanged.
+    const uint32_t base_cyc = (clock_get_hz(clk_sys) / 1000000u) * BCM_BASE_US;
+
     for (;;) {
         g_frame_count++;
         for (int plane = 0; plane < HUB75_BCM_DEPTH; plane++) {
-            // On-time for this plane, scaled by global brightness.
-            uint32_t on_us = ((uint32_t)BCM_BASE_US << plane) * g_brightness / 255;
+            // On-time (cycles) for this plane, scaled by global brightness.
+            uint32_t on_cyc = ((uint32_t)base_cyc << plane) * g_brightness / 255;
 
             for (int row = 0; row < PANEL_SCAN_ROWS; row++) {
                 // Shift out all 64 columns for this row-pair.
@@ -144,7 +151,7 @@ static void hub75_refresh_loop(void) {
                 gpio_put(PIN_LAT, 0);
                 HUB75_DELAY();
                 gpio_put(PIN_OE, 0);
-                if (on_us) busy_wait_us_32(on_us);
+                if (on_cyc) busy_wait_at_least_cycles(on_cyc);
                 gpio_put(PIN_OE, 1);
             }
         }

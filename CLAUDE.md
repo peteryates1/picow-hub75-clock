@@ -130,9 +130,13 @@ sometimes needed for core1 to launch; a normal power-on boot is always fine.
   written with one `gpio_put_masked` instead of six `gpio_put`s. The bit order
   within that block is scrambled by PCB routing — `pack_column()` maps colours
   to the right bit using the `RGB_BIT_*` offsets in `config.h`.
-- Colour depth = `HUB75_BCM_DEPTH` (4 bits). Bit-plane *p* is lit for
-  `BCM_BASE_US << p` µs, giving binary-weighted intensity. Brightness scales
-  that on-time, so it dims the whole panel without redrawing.
+- Colour depth = `HUB75_BCM_DEPTH` (6 bits). Bit-plane *p* is lit for
+  `base << p` (binary-weighted intensity), and brightness scales that on-time,
+  so it dims the whole panel without redrawing. The on-time is timed in **CPU
+  cycles** (`base_cyc`, = `BCM_BASE_US` µs in cycles) via
+  `busy_wait_at_least_cycles`, not `busy_wait_us_32` — the µs granularity used to
+  truncate dim levels to 0, putting a brightness floor at ~4; cycles let it go
+  sub-µs so night levels like 1–2 work.
 - `OE` is **active-low** (low = lit). The loop blanks (OE high), latches, sets
   the row, then enables.
 
