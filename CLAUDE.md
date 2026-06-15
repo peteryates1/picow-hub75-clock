@@ -27,8 +27,10 @@ schedule otherwise) and controllable over **MQTT** and an on-device **web page**
   sleeps through the OE lit-time rather than spinning. `-DHUB75_PIO=OFF` falls
   back to the bit-banged loop, which is *over*clocked to **200 MHz** to stay
   flicker-free. The loop runs from RAM either way.
-- **Network:** static IP `192.168.0.4` (from `network.txt`), MQTT broker at
-  `192.168.0.2`, control page at `http://192.168.0.4/`.
+- **Network:** the live Pico W is static `192.168.0.4` (from `network.txt`),
+  MQTT broker at `192.168.0.2`, control page at `http://192.168.0.4/`. The bench
+  Pico 2 W is built for `192.168.0.5` with its own MQTT identity
+  (`picow-clock-bench`) so both run together without IP/MQTT clashes.
 - **Brightness:** day 40 / night 2, 09:00–21:00, sub-µs dimming.
 
 Canonical build for the two live targets (the Pico W is the active one):
@@ -38,8 +40,10 @@ export PICO_SDK_PATH=/home/peter/pico-sdk
 # Pico W (RP2040), control-panel + P2.5 panel:
 cmake -B build_picow -DPICO_BOARD=pico_w  -DTARGET_BOARD=control_panel -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON
 cmake --build build_picow -j4
-# Pico 2 W (RP2350) bench board:
-cmake -B build_cp2   -DPICO_BOARD=pico2_w -DTARGET_BOARD=control_panel -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON
+# Pico 2 W (RP2350) bench board -- own IP + MQTT identity so it can run
+# alongside the live Pico W on the same network/broker:
+cmake -B build_cp2   -DPICO_BOARD=pico2_w -DTARGET_BOARD=control_panel -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON \
+      -DSTATIC_IP=192.168.0.5 -DMQTT_CLIENT_ID=picow-clock-bench -DMQTT_TOPIC_PREFIX=picow-clock-bench
 cmake --build build_cp2 -j4
 ```
 
@@ -51,8 +55,9 @@ options: `-DTARGET_BOARD=control_panel` (pin map; default is the clock PCB),
 `-DPANEL_SWAP_GB=ON` (Adafruit P2.5 G/B swap), `-DHUB75_PIO=OFF` (use the
 bit-bang backend instead of the default PIO+DMA one), `-DTZ_DST_UK=ON` (UK DST)
 or `-DTZ_OFFSET_SECONDS=`, `-DWEATHER_LAT=/-DWEATHER_LON=`, `-DMQTT_BROKER_IP=`,
-`-DSYS_CLOCK_KHZ=`, and the diagnostics `-DDISPLAY_TEST_PATTERN=ON` /
-`-DICON_DEMO=ON`. Notes:
+`-DMQTT_CLIENT_ID=/-DMQTT_TOPIC_PREFIX=` (distinct MQTT identity for a second
+board), `-DSTATIC_IP=` (override `network.txt`), `-DSYS_CLOCK_KHZ=`, and the
+diagnostics `-DDISPLAY_TEST_PATTERN=ON` / `-DICON_DEMO=ON`. Notes:
 
 - `PICO_BOARD` defaults to `pico_w` in CMakeLists.txt **before** the SDK import
   — required or the `pico/cyw43_arch.h` headers won't be on the include path.
@@ -110,9 +115,11 @@ sudo picotool load build_picow/picow_hub75_clock.uf2 && sudo picotool reboot
 ```
 
 Once running, the Pico W is only reachable over the network unless USB is cabled
-to the host (`http://192.168.0.4/`, or the serial heartbeat if connected). Note
-both boards default to `STATIC_IP=192.168.0.4` from `network.txt`, so don't power
-both at once without changing one.
+to the host (`http://192.168.0.4/`, or the serial heartbeat if connected). The
+live Pico W uses `STATIC_IP=192.168.0.4` from `network.txt`; the bench Pico 2 W
+is built with `-DSTATIC_IP=192.168.0.5` + a distinct MQTT identity (above) so the
+two coexist. A plain build with no `-DSTATIC_IP` also defaults to `.4`, so don't
+run two such builds at once.
 
 Read serial logs from the **target's** USB CDC (vendor `2e8a`, *not* the `000c`
 probe); the node moves around (`/dev/ttyACM*`) across re-enumerations, so pick it

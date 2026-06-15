@@ -148,8 +148,11 @@ sudo picotool load build_picow/picow_hub75_clock.uf2 && sudo picotool reboot
 **Pico 2 W (RP2350) — over SWD via a Raspberry Pi Debug Probe:**
 
 ```sh
+# Own IP + MQTT identity so the bench board coexists with the live Pico W:
 cmake -B build_cp2 -DPICO_BOARD=pico2_w -DTARGET_BOARD=control_panel \
-      -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON
+      -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON \
+      -DSTATIC_IP=192.168.0.5 -DMQTT_CLIENT_ID=picow-clock-bench \
+      -DMQTT_TOPIC_PREFIX=picow-clock-bench
 cmake --build build_cp2
 sudo openocd -f interface/cmsis-dap.cfg -f target/rp2350.cfg \
   -c "adapter speed 1000" \
