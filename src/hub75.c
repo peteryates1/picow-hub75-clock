@@ -287,9 +287,15 @@ static void __not_in_flash_func(hub75_refresh_loop)(void) {
                 busy_wait_at_least_cycles(8);
                 gpio_put(PIN_LAT, 0);
                 busy_wait_at_least_cycles(8);
-                gpio_put(PIN_OE, 0);
-                if (on_cyc) oe_wait_cycles(on_cyc);   // WFI-sleeps through the lit time
-                gpio_put(PIN_OE, 1);
+                // Only un-blank if this plane has on-time. At brightness 0 every
+                // plane is 0, so OE stays high and the panel is truly off -- a
+                // zero-length OE pulse otherwise leaks a faint red ghost of the
+                // latched row (red LEDs light at the lowest drive).
+                if (on_cyc) {
+                    gpio_put(PIN_OE, 0);
+                    oe_wait_cycles(on_cyc);   // WFI-sleeps through the lit time
+                    gpio_put(PIN_OE, 1);
+                }
             }
         }
     }
@@ -377,9 +383,14 @@ static void __not_in_flash_func(hub75_refresh_loop)(void) {
                 HUB75_DELAY();
                 gpio_put(PIN_LAT, 0);
                 HUB75_DELAY();
-                gpio_put(PIN_OE, 0);
-                if (on_cyc) busy_wait_at_least_cycles(on_cyc);
-                gpio_put(PIN_OE, 1);
+                // Only un-blank if this plane has on-time; at brightness 0 leave
+                // OE high so the panel is truly off (a zero-length OE pulse leaks
+                // a faint red ghost of the latched row).
+                if (on_cyc) {
+                    gpio_put(PIN_OE, 0);
+                    busy_wait_at_least_cycles(on_cyc);
+                    gpio_put(PIN_OE, 1);
+                }
             }
         }
     }
