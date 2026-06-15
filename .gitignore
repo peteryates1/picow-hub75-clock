@@ -18,3 +18,8 @@ __pycache__/
 # Stray downloads
 *.whl
 *.dwg
+
+# Webcam/debug captures of the panel
+*.jpg
+*.jpeg
+*.webm

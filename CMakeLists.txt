@@ -29,6 +29,10 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
+# Generate the HUB75 PIO program header (hub75.pio.h, in the build dir) used by
+# the -DHUB75_PIO refresh backend.
+pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/src/hub75.pio)
+
 # Wi-Fi credentials: a primary network and an optional backup. From -D flags,
 # else read from an untracked network.txt in the project root:
 #     WIFI_SSID=PrimaryNet
@@ -120,6 +124,15 @@ if (PANEL_SWAP_GB)
     message(STATUS "PANEL_SWAP_GB: ON (green/blue swapped)")
 endif ()
 
+# HUB75 refresh backend. Default is the bit-banged core1 loop. -DHUB75_PIO=ON
+# uses the PIO+DMA RGB shifter: core1 streams pre-packed bit-planes to a PIO
+# state machine that clocks the pixels out, so the per-pixel clocking no longer
+# burns CPU and the refresh rate is decoupled from the system clock.
+if (HUB75_PIO)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HUB75_PIO)
+    message(STATUS "HUB75_PIO: ON (PIO+DMA shifter)")
+endif ()
+
 # Icon demo: -DICON_DEMO=ON cycles all weather icons (2s each) and shows the day
 # as WEDNESDAY, to check the icons and the longest-day gap.
 if (ICON_DEMO)
@@ -141,6 +154,8 @@ target_link_libraries(${PROJECT_NAME}
     pico_lwip_mqtt
     hardware_adc
     hardware_gpio
+    hardware_pio
+    hardware_dma
     pico_aon_timer
 )
 

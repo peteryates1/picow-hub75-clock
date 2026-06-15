@@ -1,0 +1,17 @@
+; HUB75 RGB data shifter.
+;
+; Outputs the 6 RGB bits of each pixel to the OUT pins (the contiguous RGB GPIO
+; block) and pulses CLK on the side-set pin. Pixel data is streamed in via DMA
+; to the TX FIFO; the OSR shifts right (LSB first) with autopull every 24 bits,
+; so each 32-bit word carries 4 pixels (6 bits each, low 24 bits used).
+;
+; The HUB75 shift registers latch on CLK's rising edge: `out` drives the data
+; with CLK low (1 cycle of setup), then the next instruction raises CLK.
+
+.program hub75_data
+.side_set 1
+
+.wrap_target
+    out pins, 6   side 0   ; drive RGB pins, CLK low (data setup)
+    nop           side 1   ; CLK high -> data clocked into the shift register
+.wrap
