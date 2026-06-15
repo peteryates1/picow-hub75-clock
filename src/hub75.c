@@ -95,6 +95,9 @@ static inline void hub75_set_row(int row) {
 // ===========================================================================
 #include "hardware/pio.h"
 #include "hardware/dma.h"
+#include "hardware/exception.h"
+#include "hardware/structs/systick.h"
+#include "hardware/sync.h"
 #include "hub75.pio.h"
 
 // State-machine clock. CLK = SM/2 (two instructions per pixel). 30 MHz SM ->
@@ -153,6 +156,42 @@ void hub75_flip(void) {
     g_front = back;
 }
 
+// --- low-power lit-time wait (core1 SysTick) -------------------------------
+// Instead of busy-waiting the OE on-time, arm core1's SysTick for that many CPU
+// cycles and __wfi() so the core halts its clock until it expires. SysTick is
+// core-local and counts CPU cycles, so it keeps the old busy_wait's sub-µs
+// resolution. The handler only needs to wake the core.
+static void __not_in_flash_func(core1_systick_isr)(void) { /* wake only */ }
+
+// SysTick CSR bits and COUNTFLAG (ARM-standard, arch-independent).
+#define SYST_CSR_ENABLE    (1u << 0)
+#define SYST_CSR_TICKINT   (1u << 1)
+#define SYST_CSR_CLKSOURCE (1u << 2)   // processor clock
+#define SYST_CSR_COUNTFLAG (1u << 16)
+
+// Fixed cycles lost to the WFI round-trip (exception entry/exit), subtracted so
+// the lit time matches the old busy_wait. Below OE_WFI_MIN_CYC the overhead
+// would dominate, so just busy-wait (this is the dim night range anyway).
+#define OE_WFI_OVERHEAD_CYC 30u
+#define OE_WFI_MIN_CYC      120u
+
+static inline void __not_in_flash_func(oe_wait_cycles)(uint32_t cyc) {
+    if (cyc < OE_WFI_MIN_CYC) {
+        busy_wait_at_least_cycles(cyc);
+        return;
+    }
+    uint32_t n = cyc - OE_WFI_OVERHEAD_CYC;
+    if (n > 0x00FFFFFFu) n = 0x00FFFFFFu;           // 24-bit reload
+    systick_hw->rvr = n;
+    systick_hw->cvr = 0;                            // clear -> reload, clear COUNTFLAG
+    systick_hw->csr = SYST_CSR_ENABLE | SYST_CSR_TICKINT | SYST_CSR_CLKSOURCE;
+    // Loop guards against a spurious wake (e.g. the multicore-lockout SIO IRQ):
+    // only proceed once SysTick has actually counted down. Reading CSR clears
+    // COUNTFLAG.
+    while (!(systick_hw->csr & SYST_CSR_COUNTFLAG)) __wfi();
+    systick_hw->csr = 0;                            // stop
+}
+
 static void hub75_pio_init(void) {
     // Blank/latch/address are driven directly by core1.
     const uint ctrl[] = {
@@ -197,6 +236,11 @@ static void hub75_pio_init(void) {
     channel_config_set_dreq(&dc, pio_get_dreq(pio_inst, pio_sm, true));
     dma_channel_configure(dma_chan, &dc, &pio_inst->txf[pio_sm], NULL,
                           PIO_ROW_WORDS, false);
+
+    // Install core1's SysTick handler (used by oe_wait_cycles to sleep through
+    // the OE lit-time). Start with SysTick stopped.
+    exception_set_exclusive_handler(SYSTICK_EXCEPTION, core1_systick_isr);
+    systick_hw->csr = 0;
 }
 
 // Run from RAM (see the bit-bang note below): keeps the OE timing off the
@@ -244,7 +288,7 @@ static void __not_in_flash_func(hub75_refresh_loop)(void) {
                 gpio_put(PIN_LAT, 0);
                 busy_wait_at_least_cycles(8);
                 gpio_put(PIN_OE, 0);
-                if (on_cyc) busy_wait_at_least_cycles(on_cyc);
+                if (on_cyc) oe_wait_cycles(on_cyc);   // WFI-sleeps through the lit time
                 gpio_put(PIN_OE, 1);
             }
         }
