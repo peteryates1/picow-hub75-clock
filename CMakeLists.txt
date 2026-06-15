@@ -146,6 +146,17 @@ if (DEFINED SYS_CLOCK_KHZ)
     message(STATUS "SYS_CLOCK_KHZ: ${SYS_CLOCK_KHZ}")
 endif ()
 
+# MQTT identity overrides, so a second board on the same broker (e.g. the bench
+# Pico 2 W) doesn't share the live board's client id / topics.
+if (DEFINED MQTT_CLIENT_ID)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE MQTT_CLIENT_ID=\"${MQTT_CLIENT_ID}\")
+    message(STATUS "MQTT_CLIENT_ID: ${MQTT_CLIENT_ID}")
+endif ()
+if (DEFINED MQTT_TOPIC_PREFIX)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE MQTT_TOPIC_PREFIX=\"${MQTT_TOPIC_PREFIX}\")
+    message(STATUS "MQTT_TOPIC_PREFIX: ${MQTT_TOPIC_PREFIX}")
+endif ()
+
 # Icon demo: -DICON_DEMO=ON cycles all weather icons (2s each) and shows the day
 # as WEDNESDAY, to check the icons and the longest-day gap.
 if (ICON_DEMO)

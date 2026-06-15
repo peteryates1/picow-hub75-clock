@@ -100,8 +100,15 @@
 #define MQTT_BROKER_IP "192.168.0.2"
 #endif
 #define MQTT_BROKER_PORT  1883
+// Client id and topic prefix. Override with -DMQTT_CLIENT_ID= / -DMQTT_TOPIC_PREFIX=
+// so a second board on the same broker (e.g. the bench Pico 2 W) gets its own
+// identity instead of fighting the live board for the shared client id.
+#ifndef MQTT_CLIENT_ID
 #define MQTT_CLIENT_ID    "picow-clock"
+#endif
+#ifndef MQTT_TOPIC_PREFIX
 #define MQTT_TOPIC_PREFIX "picow-clock"
+#endif
 // Subscribed topics: <prefix>/brightness/set  (0-255 or "auto")
 //                    <prefix>/power/set        ("ON"/"OFF")
 
