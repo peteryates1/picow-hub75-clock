@@ -4,26 +4,51 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Firmware for a Raspberry Pi Pico W that drives a **64×32 HUB75 RGB LED matrix**
-as a network clock. Time is set from NTP over Wi-Fi at boot and re-synced
-periodically; a GL5516 LDR on ADC0 auto-dims the panel (bright by day, dim at
-night). Pure C on the Pico SDK (2.2.0), no RTOS.
+Firmware for a Raspberry Pi Pico W (or Pico 2 W) that drives a **64×32 HUB75 RGB
+LED matrix** as a network clock. Pure C on the Pico SDK (2.2.0), no RTOS. It
+shows a large antialiased time, the current outside temperature + a time-aware
+forecast + a conditions icon, and the day/date — over Wi-Fi via NTP (UK DST) and
+Open-Meteo. Brightness is automatic (LDR on the real clock board, time-of-day
+schedule otherwise) and controllable over **MQTT** and an on-device **web page**.
 
-## Build & flash
+### Current setup (live deployment)
+
+- **Board/chip:** a bare **Pico W (RP2040)** is the live target; the same
+  firmware also runs on a **Pico 2 W (RP2350)** bench board on a debug probe.
+- **PCB/panel:** the "Control_Panel_8" carrier driving an **Adafruit
+  RGB-Matrix-P2.5 64×32** panel — 1/16 scan, **green/blue swapped** vs standard
+  HUB75 (`-DPANEL_SWAP_GB=ON`), **M3** mounting holes, powered from a separate
+  5 V supply with a common ground.
+- **Clock:** overclocked to **200 MHz** (`SYS_CLOCK_KHZ`) so the bit-banged
+  refresh is flicker-free; the refresh loop runs from RAM. (A PIO+DMA driver is
+  planned to let the clock drop back to default.)
+- **Network:** static IP `192.168.0.4` (from `network.txt`), MQTT broker at
+  `192.168.0.2`, control page at `http://192.168.0.4/`.
+- **Brightness:** day 40 / night 2, 09:00–21:00, sub-µs dimming.
+
+Canonical build for the two live targets (the Pico W is the active one):
 
 ```sh
 export PICO_SDK_PATH=/home/peter/pico-sdk
-# Clock board (default):
-cmake -B build                                          # UK time: -DTZ_DST_UK=ON  (or fixed -DTZ_OFFSET_SECONDS=3600)
-cmake --build build -j4
-# Control-panel test board:
-cmake -B build_cp -DTARGET_BOARD=control_panel
-cmake --build build_cp -j4
+# Pico W (RP2040), control-panel + P2.5 panel:
+cmake -B build_picow -DPICO_BOARD=pico_w  -DTARGET_BOARD=control_panel -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON
+cmake --build build_picow -j4
+# Pico 2 W (RP2350) bench board:
+cmake -B build_cp2   -DPICO_BOARD=pico2_w -DTARGET_BOARD=control_panel -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON
+cmake --build build_cp2 -j4
 ```
 
-- Output: `build/picow_hub75_clock.uf2`. Flash by holding BOOTSEL, plugging in,
-  and copying the `.uf2` to the `RPI-RP2` drive (or via SWD — see below).
-- `PICO_BOARD` is forced to `pico_w` in CMakeLists.txt **before** the SDK import
+## Build & flash
+
+Canonical build commands are under **Current setup** above; full flash details
+(SWD vs BOOTSEL) are under **Flashing & on-hardware testing** below. Build
+options: `-DTARGET_BOARD=control_panel` (pin map; default is the clock PCB),
+`-DPANEL_SWAP_GB=ON` (Adafruit P2.5 G/B swap), `-DTZ_DST_UK=ON` (UK DST) or
+`-DTZ_OFFSET_SECONDS=`, `-DWEATHER_LAT=/-DWEATHER_LON=`, `-DMQTT_BROKER_IP=`,
+`-DSYS_CLOCK_KHZ=`, and the diagnostics `-DDISPLAY_TEST_PATTERN=ON` /
+`-DICON_DEMO=ON`. Notes:
+
+- `PICO_BOARD` defaults to `pico_w` in CMakeLists.txt **before** the SDK import
   — required or the `pico/cyw43_arch.h` headers won't be on the include path.
 - **Wi-Fi credentials**: CMake reads them from an untracked `network.txt` in the
   project root (`WIFI_SSID`/`WIFI_PASSWORD`, plus optional
@@ -36,42 +61,52 @@ cmake --build build_cp -j4
   loop prints a periodic `[hb] wifi_link=… time=…` heartbeat so status is
   observable without having to catch the one-shot boot logs.
 
-## Flashing & on-hardware testing (Pico 2 W + debug probe)
+## Flashing & on-hardware testing
 
-The current **bench test board is a Pico 2 W (RP2350, Cortex-M33)** driven over
-SWD by a Raspberry Pi Debug Probe — *not* the RP2040 Pico W that the product
-clock PCB uses. The two are different architectures, so firmware must be built
-for the matching chip:
+Two boards, two flash methods. They're different architectures, so build for the
+matching chip (`-DPICO_BOARD=pico_w` vs `pico2_w`). `pico_aon_timer` (not
+`hardware_rtc`) keeps the same time code working on both: **RP2350 has no RTC
+peripheral**, so the SDK backs the AON timer with `hardware_powman` there — don't
+switch to `hardware/rtc.h` or the RP2350 build breaks. Panel mounting holes M3.
 
-```sh
-# Build for the RP2350 bench board (separate build dir). The Adafruit P2.5
-# 64x32 panel has green/blue swapped, so add -DPANEL_SWAP_GB=ON:
-cmake -B build_pico2 -DPICO_BOARD=pico2_w -DTARGET_BOARD=control_panel \
-      -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON
-cmake --build build_pico2 -j4
-```
+### Pico 2 W (RP2350) — debug probe, SWD
 
-Panel mounting holes are **M3**.
-
-`pico_aon_timer` (not `hardware_rtc`) is used precisely so the same time code
-works on both: **RP2350 has no RTC peripheral**, so on that target the SDK
-transparently backs the AON timer with `hardware_powman`. Don't switch to
-`hardware/rtc.h` — it would break the RP2350 build.
-
-Flash and reset over SWD (the probe enumerates as USB `2e8a:000c`):
+The bench Pico 2 W is driven over SWD by a Raspberry Pi Debug Probe (USB
+`2e8a:000c`). Fast dev loop (no manual button), so prefer it for iterating.
 
 ```sh
+cmake -B build_cp2 -DPICO_BOARD=pico2_w -DTARGET_BOARD=control_panel -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON
+cmake --build build_cp2 -j4
 sudo openocd -f interface/cmsis-dap.cfg -f target/rp2350.cfg \
   -c "adapter speed 1000" \
-  -c "program build_pico2/picow_hub75_clock.elf verify reset exit"
+  -c "program build_cp2/picow_hub75_clock.elf verify reset exit"
 ```
 
-- Use `target/rp2350.cfg` for the Pico 2 W, `target/rp2040.cfg` for a real Pico
-  W. Wrong target ⇒ `Too long SWD WAIT` / `Failed to connect multidrop`.
-- `sudo` is currently required: the host user is not in the `plugdev` group, so
-  openocd can't open the probe's USB node otherwise. (Fix: add the user to
-  `plugdev` and re-login.)
-- Keep SWD at ~1000 kHz; 5000 kHz was unreliable on this rig.
+- Use `target/rp2350.cfg` for the Pico 2 W, `target/rp2040.cfg` for a real Pico W.
+  Wrong target ⇒ `Too long SWD WAIT` / `Failed to connect multidrop`.
+- `sudo` is required: the host user isn't in `plugdev`, so openocd/picotool can't
+  open the USB node otherwise. Keep SWD at ~1000 kHz (5000 was unreliable here).
+- RP2350 gotcha: a debugger reset doesn't reliably restart core1 — sometimes a
+  cold power-cycle is needed (see the core1 launch-order note above).
+
+### Pico W (RP2040) — BOOTSEL, no probe
+
+The live Pico W has no probe, so flash over USB:
+
+```sh
+cmake -B build_picow -DPICO_BOARD=pico_w -DTARGET_BOARD=control_panel -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON
+cmake --build build_picow -j4
+# Put it in BOOTSEL: HOLD the BOOTSEL button while plugging in USB (this board
+# has no software reset-to-bootloader, so the button is required). It enumerates
+# as 2e8a:0003 / the RPI-RP2 drive. Then:
+sudo picotool load build_picow/picow_hub75_clock.uf2 && sudo picotool reboot
+# ...or drag build_picow/picow_hub75_clock.uf2 onto the RPI-RP2 drive.
+```
+
+Once running, the Pico W is only reachable over the network unless USB is cabled
+to the host (`http://192.168.0.4/`, or the serial heartbeat if connected). Note
+both boards default to `STATIC_IP=192.168.0.4` from `network.txt`, so don't power
+both at once without changing one.
 
 Read serial logs from the **target's** USB CDC (vendor `2e8a`, *not* the `000c`
 probe); the node moves around (`/dev/ttyACM*`) across re-enumerations, so pick it

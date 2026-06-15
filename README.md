@@ -125,25 +125,41 @@ python3 tools/clock_control.py [broker_ip]   # default 192.168.0.2
 
 It gives a brightness slider, an **Auto** button, and **On**/**Off** buttons.
 
-### Bench testing on a Pico 2 W via debug probe
+### Boards & flashing
 
-The original Pico W (RP2040) and the Pico 2 W (RP2350) are **different
-architectures**; build for whichever chip is connected. To test on a Pico 2 W
-over a Raspberry Pi Debug Probe:
+The same firmware runs on a **Pico W (RP2040)** and a **Pico 2 W (RP2350)** —
+they're different architectures, so build for whichever chip is connected
+(`-DPICO_BOARD=pico_w` vs `pico2_w`). The live build also uses
+`-DTARGET_BOARD=control_panel -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON` (Adafruit P2.5
+panel on the control-panel carrier).
+
+**Pico W (RP2040) — over USB, no probe:**
 
 ```sh
-cmake -B build_pico2 -DPICO_BOARD=pico2_w -DTARGET_BOARD=control_panel \
+cmake -B build_picow -DPICO_BOARD=pico_w -DTARGET_BOARD=control_panel \
       -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON
-cmake --build build_pico2
-sudo openocd -f interface/cmsis-dap.cfg -f target/rp2350.cfg \
-  -c "adapter speed 1000" \
-  -c "program build_pico2/picow_hub75_clock.elf verify reset exit"
+cmake --build build_picow
+# Hold BOOTSEL while plugging in USB (this board needs the physical button),
+# then either:
+sudo picotool load build_picow/picow_hub75_clock.uf2 && sudo picotool reboot
+#   ...or drag build_picow/picow_hub75_clock.uf2 onto the RPI-RP2 drive.
 ```
 
-Then watch the target's USB-CDC serial (`/dev/ttyACM*`, vendor `2e8a`) for the
-`[hb] wifi_link=… time=…` heartbeat. See [CLAUDE.md](CLAUDE.md) for details
-(SWD target configs, permissions, why `pico_aon_timer` is used instead of the
-RP2040 RTC).
+**Pico 2 W (RP2350) — over SWD via a Raspberry Pi Debug Probe:**
+
+```sh
+cmake -B build_cp2 -DPICO_BOARD=pico2_w -DTARGET_BOARD=control_panel \
+      -DTZ_DST_UK=ON -DPANEL_SWAP_GB=ON
+cmake --build build_cp2
+sudo openocd -f interface/cmsis-dap.cfg -f target/rp2350.cfg \
+  -c "adapter speed 1000" \
+  -c "program build_cp2/picow_hub75_clock.elf verify reset exit"
+```
+
+The firmware overclocks to 200 MHz (`SYS_CLOCK_KHZ`) for a flicker-free refresh.
+Watch the USB-CDC serial (`/dev/ttyACM*`, vendor `2e8a`) for the `[hb] …`
+heartbeat. See [CLAUDE.md](CLAUDE.md) for details (SWD configs, the RP2350 core1
+launch-order gotcha, why `pico_aon_timer` is used instead of the RP2040 RTC).
 
 ## Architecture
 
