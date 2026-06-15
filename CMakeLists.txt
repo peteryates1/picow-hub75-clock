@@ -124,13 +124,19 @@ if (PANEL_SWAP_GB)
     message(STATUS "PANEL_SWAP_GB: ON (green/blue swapped)")
 endif ()
 
-# HUB75 refresh backend. Default is the bit-banged core1 loop. -DHUB75_PIO=ON
-# uses the PIO+DMA RGB shifter: core1 streams pre-packed bit-planes to a PIO
-# state machine that clocks the pixels out, so the per-pixel clocking no longer
-# burns CPU and the refresh rate is decoupled from the system clock.
+# HUB75 refresh backend. PIO+DMA is the default: core1 streams pre-packed
+# bit-planes to a PIO state machine that clocks the pixels out, so per-pixel
+# clocking no longer burns CPU and the refresh rate is decoupled from the system
+# clock (no overclock needed -- see SYS_CLOCK_KHZ in config.h). -DHUB75_PIO=OFF
+# reverts to the bit-banged core1 loop (which is then overclocked to 200 MHz).
+if (NOT DEFINED HUB75_PIO)
+    set(HUB75_PIO ON)
+endif ()
 if (HUB75_PIO)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HUB75_PIO)
-    message(STATUS "HUB75_PIO: ON (PIO+DMA shifter)")
+    message(STATUS "HUB75 backend: PIO+DMA (default)")
+else ()
+    message(STATUS "HUB75 backend: bit-bang (-DHUB75_PIO=OFF)")
 endif ()
 
 # System clock override (kHz). Default is 200 MHz for the bit-bang backend and

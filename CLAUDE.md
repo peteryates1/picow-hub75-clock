@@ -19,9 +19,12 @@ schedule otherwise) and controllable over **MQTT** and an on-device **web page**
   RGB-Matrix-P2.5 64×32** panel — 1/16 scan, **green/blue swapped** vs standard
   HUB75 (`-DPANEL_SWAP_GB=ON`), **M3** mounting holes, powered from a separate
   5 V supply with a common ground.
-- **Clock:** overclocked to **200 MHz** (`SYS_CLOCK_KHZ`) so the bit-banged
-  refresh is flicker-free; the refresh loop runs from RAM. (A PIO+DMA driver is
-  planned to let the clock drop back to default.)
+- **Refresh:** the default backend is a **PIO + DMA** RGB shifter (`hub75.pio` +
+  the PIO path in `hub75.c`); it clocks pixels at a fixed rate independent of the
+  CPU clock, so the chip runs at the **SDK-default clock** (~1300 fps, no
+  overclock, runs cool). `-DHUB75_PIO=OFF` falls back to the bit-banged loop,
+  which is overclocked to **200 MHz** (`SYS_CLOCK_KHZ`) to stay flicker-free. The
+  loop runs from RAM either way.
 - **Network:** static IP `192.168.0.4` (from `network.txt`), MQTT broker at
   `192.168.0.2`, control page at `http://192.168.0.4/`.
 - **Brightness:** day 40 / night 2, 09:00–21:00, sub-µs dimming.
@@ -43,8 +46,9 @@ cmake --build build_cp2 -j4
 Canonical build commands are under **Current setup** above; full flash details
 (SWD vs BOOTSEL) are under **Flashing & on-hardware testing** below. Build
 options: `-DTARGET_BOARD=control_panel` (pin map; default is the clock PCB),
-`-DPANEL_SWAP_GB=ON` (Adafruit P2.5 G/B swap), `-DTZ_DST_UK=ON` (UK DST) or
-`-DTZ_OFFSET_SECONDS=`, `-DWEATHER_LAT=/-DWEATHER_LON=`, `-DMQTT_BROKER_IP=`,
+`-DPANEL_SWAP_GB=ON` (Adafruit P2.5 G/B swap), `-DHUB75_PIO=OFF` (use the
+bit-bang backend instead of the default PIO+DMA one), `-DTZ_DST_UK=ON` (UK DST)
+or `-DTZ_OFFSET_SECONDS=`, `-DWEATHER_LAT=/-DWEATHER_LON=`, `-DMQTT_BROKER_IP=`,
 `-DSYS_CLOCK_KHZ=`, and the diagnostics `-DDISPLAY_TEST_PATTERN=ON` /
 `-DICON_DEMO=ON`. Notes:
 
@@ -124,13 +128,14 @@ timeout 20 cat /dev/ttyACM1
 The two cores have strict, separate jobs and communicate only through the shared
 framebuffer + a brightness byte. Keep this boundary intact.
 
-- **core1 = display only.** `hub75.c` runs an infinite bit-banged **Binary Code
-  Modulation (BCM)** refresh loop (`hub75_refresh_loop`), launched via
-  `multicore_launch_core1`. It owns every HUB75 GPIO and all the timing. core0
-  must never touch those pins.
+- **core1 = display only.** `hub75.c` runs an infinite **Binary Code Modulation
+  (BCM)** refresh loop (`hub75_refresh_loop`), launched via
+  `multicore_launch_core1`. There are two backends (selected at build time, see
+  below); core1 owns the HUB75 timing in both and core0 must never touch those
+  pins.
 - **core0 = everything else.** `main.c` does Wi-Fi, NTP, reads the LDR, formats
-  the time, and writes pixels. It only ever calls `hub75_set_pixel/clear` and
-  `hub75_set_brightness`.
+  the time, and writes pixels. It only ever calls `hub75_set_pixel/clear`,
+  `hub75_flip` (commit a drawn frame), and `hub75_set_brightness`.
 - **Shared state, deliberately lock-free.** The `fb[][][]` framebuffer and
   `g_brightness` in `hub75.c` are plain `volatile` with no mutex. A pixel can
   tear for a single frame mid-update, which is invisible on a clock. Don't add
@@ -156,6 +161,30 @@ The serial heartbeat prints `core1=<alive> frames=<n>`; if `frames` is frozen,
 core1 has died — check this ordering first. Note SWD/debugger resets don't
 reliably reset core1, so after flashing, a **cold power-cycle of the Pico** is
 sometimes needed for core1 to launch; a normal power-on boot is always fine.
+
+### Two refresh backends (`#ifdef HUB75_PIO` in `hub75.c`)
+
+Same BCM scheme and pin map, two ways to drive it. Both run from RAM
+(`__not_in_flash_func`) and time the OE on-time in CPU cycles.
+
+- **PIO + DMA (default).** `hub75.pio` is a tiny shifter SM: `out pins, 6`
+  drives the six RGB pins, side-set toggles CLK, autopull-at-24 = 4 pixels per
+  32-bit word. DMA streams one (plane,row) of packed words into it; core1 waits
+  for DMA done, then for the SM's **TXSTALL** (last pixel clocked) before
+  latching. Pixels are pre-packed into a **double-buffered** `pio_fb` by
+  `hub75_repack`/`hub75_flip` on **core0**, and core1 reads `g_front` once per
+  frame — so core1 never pauses to re-pack. Two hard-won details: (1) clear
+  TXSTALL only *after* the DMA finishes, else it re-asserts within a cycle (the
+  SM is still stalled from the previous row) and core1 latches before anything
+  shifts → garbled/speckled panel; (2) the re-pack must be off core1 — doing it
+  on core1 on change blanks the panel for the pack and shows as a ~5 Hz blink.
+  The SM runs at a fixed `HUB75_PIO_SM_HZ` (30 MHz, 15 MHz pixel clock)
+  independent of `clk_sys`, so **no overclock is needed** (~1300 fps at the
+  default clock; lower `HUB75_PIO_SM_HZ` if a panel garbles).
+- **Bit-bang (`-DHUB75_PIO=OFF`).** `hub75_refresh_loop` clocks every pixel by
+  hand with `gpio_put_masked` + `HUB75_DELAY()`. Simpler, but the refresh rate
+  scales with `clk_sys`, so it needs the **200 MHz overclock** to be
+  flicker-free. `pack_column()` packs a column on the fly.
 
 ### Display driver details (`hub75.c`)
 

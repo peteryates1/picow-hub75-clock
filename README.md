@@ -156,10 +156,15 @@ sudo openocd -f interface/cmsis-dap.cfg -f target/rp2350.cfg \
   -c "program build_cp2/picow_hub75_clock.elf verify reset exit"
 ```
 
-The firmware overclocks to 200 MHz (`SYS_CLOCK_KHZ`) for a flicker-free refresh.
+The panel is driven by a **PIO + DMA** shifter by default, which clocks pixels
+independently of the CPU so it stays flicker-free at the default clock (no
+overclock, runs cool). `-DHUB75_PIO=OFF` selects the simpler bit-banged backend,
+which is then overclocked to 200 MHz (`SYS_CLOCK_KHZ`) to match.
+
 Watch the USB-CDC serial (`/dev/ttyACM*`, vendor `2e8a`) for the `[hb] …`
-heartbeat. See [CLAUDE.md](CLAUDE.md) for details (SWD configs, the RP2350 core1
-launch-order gotcha, why `pico_aon_timer` is used instead of the RP2040 RTC).
+heartbeat. See [CLAUDE.md](CLAUDE.md) for details (the two refresh backends, SWD
+configs, the RP2350 core1 launch-order gotcha, why `pico_aon_timer` is used
+instead of the RP2040 RTC).
 
 ## Architecture
 
