@@ -110,7 +110,11 @@ static inline uint32_t pack_column(int x, int top_y, int bot_y, int plane) {
     return v << RGB_BASE_PIN;
 }
 
-static void hub75_refresh_loop(void) {
+// Run the refresh loop from RAM (not XIP flash). On the RP2040 both cores share
+// one flash cache, so core1 fetching the loop from flash contends with core0's
+// flash execution and jitters the OE timing -> visible flicker. Executing from
+// RAM removes the contention. (Harmless on RP2350.)
+static void __not_in_flash_func(hub75_refresh_loop)(void) {
     hub75_gpio_init();
     // Register core1 so that any flash-unsafe operation on core0 (e.g. inside
     // the cyw43 driver) parks core1 safely instead of corrupting its execution.
