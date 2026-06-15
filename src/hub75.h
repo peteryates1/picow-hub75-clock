@@ -26,6 +26,12 @@ void hub75_set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b);
 // Clear the whole framebuffer to black.
 void hub75_clear(void);
 
+// Commit the current framebuffer to the display. Call once after finishing a
+// frame's drawing. For the PIO backend this re-packs the bit-planes into the
+// off-screen buffer and swaps it in, so the refresh never pauses mid-frame; for
+// the bit-bang backend (which reads the framebuffer directly) it is a no-op.
+void hub75_flip(void);
+
 // Global brightness, 0 (off) .. 255 (full). Applied by the refresh loop, so
 // it affects everything already on screen without redrawing.
 void hub75_set_brightness(uint8_t brightness);

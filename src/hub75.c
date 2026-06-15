@@ -32,11 +32,6 @@ static volatile uint8_t fb[PANEL_HEIGHT][PANEL_WIDTH][3];
 // Global brightness scales the BCM on-time. Single byte, atomic to update.
 static volatile uint8_t g_brightness = 255;
 
-// Set whenever the framebuffer changes. The PIO backend uses it to re-pack the
-// bit-planes only when the image actually changed (a few times a second),
-// instead of every refresh frame -- that's what keeps core1 mostly idle.
-static volatile bool g_fb_dirty = true;
-
 // Liveness instrumentation, written by core1, read by core0.
 static volatile bool     g_core1_alive = false;
 static volatile uint32_t g_frame_count = 0;
@@ -49,14 +44,12 @@ void hub75_set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
     fb[y][x][0] = r;
     fb[y][x][1] = g;
     fb[y][x][2] = b;
-    g_fb_dirty = true;
 }
 
 void hub75_clear(void) {
     for (int y = 0; y < PANEL_HEIGHT; y++)
         for (int x = 0; x < PANEL_WIDTH; x++)
             fb[y][x][0] = fb[y][x][1] = fb[y][x][2] = 0;
-    g_fb_dirty = true;
 }
 
 void hub75_set_brightness(uint8_t brightness) {
@@ -112,19 +105,23 @@ static inline void hub75_set_row(int row) {
 #endif
 
 // Packed bit-planes for the shifter: 4 pixels (6 RGB bits each) per 32-bit word,
-// 16 words per row, one set per (plane, row). Re-packed from fb only on change.
+// 16 words per row, one set per (plane, row). Double-buffered: core0 re-packs
+// into the off-screen buffer in hub75_flip() and swaps g_front, so core1's
+// refresh never has to stop to re-pack (a mid-frame pause shows as a periodic
+// ~5 Hz blink). core1 reads g_front once per frame.
 #define PIO_ROW_WORDS (PANEL_WIDTH / 4)
-static uint32_t pio_fb[HUB75_BCM_DEPTH][PANEL_SCAN_ROWS][PIO_ROW_WORDS];
+static uint32_t pio_fb[2][HUB75_BCM_DEPTH][PANEL_SCAN_ROWS][PIO_ROW_WORDS];
+static volatile uint8_t g_front = 0;
 
 static PIO  pio_inst = pio0;
 static uint pio_sm;
 static int  dma_chan;
 
-// Re-pack the whole framebuffer into the PIO plane buffer. Each 6-bit pixel
+// Re-pack the whole framebuffer into one PIO plane buffer. Each 6-bit pixel
 // value sits at the RGB_BIT_* offsets within the 6-pin OUT block (the SM's OUT
 // base adds the GPIO offset); four pixels are packed LSB-first per word to match
 // the OSR's right-shift + autopull-at-24.
-static void hub75_repack(void) {
+static void hub75_repack(int buf) {
     for (int plane = 0; plane < HUB75_BCM_DEPTH; plane++) {
         const uint8_t m = 1u << (uint8_t)(8 - HUB75_BCM_DEPTH + plane);
         for (int row = 0; row < PANEL_SCAN_ROWS; row++) {
@@ -142,10 +139,18 @@ static void hub75_repack(void) {
                     if (fb[bot][x][2] & m) v |= 1u << BIT_B2;
                     w |= v << (6 * k);
                 }
-                pio_fb[plane][row][wx] = w;
+                pio_fb[buf][plane][row][wx] = w;
             }
         }
     }
+}
+
+// Called by core0 after drawing a frame: re-pack into the off-screen buffer and
+// swap it in. core1 picks up the new buffer on its next frame.
+void hub75_flip(void) {
+    uint8_t back = g_front ^ 1u;
+    hub75_repack(back);
+    g_front = back;
 }
 
 static void hub75_pio_init(void) {
@@ -206,7 +211,9 @@ static void __not_in_flash_func(hub75_refresh_loop)(void) {
 
     for (;;) {
         g_frame_count++;
-        if (g_fb_dirty) { g_fb_dirty = false; hub75_repack(); }
+        // Display whichever buffer core0 last committed (read once per frame so
+        // a swap mid-frame just takes effect next frame -- no tearing).
+        const uint8_t f = g_front;
 
         for (int plane = 0; plane < HUB75_BCM_DEPTH; plane++) {
             uint32_t on_cyc = ((uint32_t)base_cyc << plane) * g_brightness / 255;
@@ -214,7 +221,7 @@ static void __not_in_flash_func(hub75_refresh_loop)(void) {
             for (int row = 0; row < PANEL_SCAN_ROWS; row++) {
                 // Stream this (plane,row)'s 64 pixels out through the PIO, then
                 // wait until they've all been clocked before latching.
-                dma_channel_set_read_addr(dma_chan, pio_fb[plane][row], false);
+                dma_channel_set_read_addr(dma_chan, pio_fb[f][plane][row], false);
                 dma_channel_set_trans_count(dma_chan, PIO_ROW_WORDS, true);
                 // 1) wait for the DMA to push every word into the FIFO. 2) THEN
                 // clear TXSTALL and wait for the SM to stall on the next (empty)
@@ -248,6 +255,10 @@ static void __not_in_flash_func(hub75_refresh_loop)(void) {
 // ===========================================================================
 // Bit-banged backend (default)
 // ===========================================================================
+
+// The bit-bang refresh reads the framebuffer directly, so committing a frame is
+// a no-op.
+void hub75_flip(void) {}
 
 static void hub75_gpio_init(void) {
     const uint pins[] = {

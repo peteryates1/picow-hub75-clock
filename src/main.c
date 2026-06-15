@@ -443,7 +443,7 @@ static void build_minmax(const struct tm *t) {
 }
 
 int main(void) {
-    set_sys_clock_khz(SYS_CLOCK_KHZ, true);   // overclock before peripherals
+    if (SYS_CLOCK_KHZ) set_sys_clock_khz(SYS_CLOCK_KHZ, true);  // before peripherals
     stdio_init_all();
 
 #ifdef DISPLAY_TEST_PATTERN
@@ -452,6 +452,7 @@ int main(void) {
     hub75_set_brightness(255);
     for (;;) {
         draw_test_pattern();
+        hub75_flip();
         sleep_ms(200);
     }
 #endif
@@ -529,6 +530,7 @@ int main(void) {
         } else {
             draw_test_pattern();
         }
+        hub75_flip();   // commit the frame (PIO double-buffer; no-op for bit-bang)
 
         // Reconnect if the Wi-Fi link has dropped (prefers the primary again).
         if (absolute_time_diff_us(get_absolute_time(), next_wifi_check) <= 0) {

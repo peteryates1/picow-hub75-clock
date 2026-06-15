@@ -133,6 +133,13 @@ if (HUB75_PIO)
     message(STATUS "HUB75_PIO: ON (PIO+DMA shifter)")
 endif ()
 
+# System clock override (kHz). Default is 200 MHz for the bit-bang backend and
+# the SDK default for the PIO backend (see include/config.h).
+if (DEFINED SYS_CLOCK_KHZ)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE SYS_CLOCK_KHZ=${SYS_CLOCK_KHZ})
+    message(STATUS "SYS_CLOCK_KHZ: ${SYS_CLOCK_KHZ}")
+endif ()
+
 # Icon demo: -DICON_DEMO=ON cycles all weather icons (2s each) and shows the day
 # as WEDNESDAY, to check the icons and the longest-day gap.
 if (ICON_DEMO)

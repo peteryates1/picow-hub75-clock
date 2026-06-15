@@ -17,12 +17,19 @@
 #endif
 
 // --- System clock ----------------------------------------------------------
-// Overclock for a higher (bit-banged) panel refresh rate -> less flicker,
-// especially on the RP2040 (default 125 MHz). 200 MHz runs fine at the default
+// The bit-banged refresh rate scales with the CPU clock, so that backend is
+// overclocked to 200 MHz for a flicker-free panel (runs fine at the default
 // core voltage on both RP2040 and RP2350; the cycle-based dimming reads the
-// live clock so it self-adjusts.
+// live clock so it self-adjusts). The PIO+DMA backend clocks pixels at a fixed
+// rate independent of clk_sys, so it needs no overclock -- leave the SDK default
+// (0 = don't call set_sys_clock_khz) so the chip runs cool. Override either with
+// -DSYS_CLOCK_KHZ=.
 #ifndef SYS_CLOCK_KHZ
-#define SYS_CLOCK_KHZ 200000
+#  ifdef HUB75_PIO
+#    define SYS_CLOCK_KHZ 0
+#  else
+#    define SYS_CLOCK_KHZ 200000
+#  endif
 #endif
 
 // --- HUB75 panel geometry (common) -----------------------------------------
