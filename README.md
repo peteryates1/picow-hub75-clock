@@ -157,9 +157,11 @@ sudo openocd -f interface/cmsis-dap.cfg -f target/rp2350.cfg \
 ```
 
 The panel is driven by a **PIO + DMA** shifter by default, which clocks pixels
-independently of the CPU so it stays flicker-free at the default clock (no
-overclock, runs cool). `-DHUB75_PIO=OFF` selects the simpler bit-banged backend,
-which is then overclocked to 200 MHz (`SYS_CLOCK_KHZ`) to match.
+independently of the CPU; the CPU is *under*clocked to 100 MHz (`SYS_CLOCK_KHZ`)
+to run cool and reliable while staying flicker-free (~1250 fps), and core1
+`__wfi()`-sleeps through the lit-time. 100 MHz is the floor — cyw43 Wi-Fi stops
+connecting below it. `-DHUB75_PIO=OFF` selects the simpler bit-banged backend,
+which is *over*clocked to 200 MHz instead.
 
 Watch the USB-CDC serial (`/dev/ttyACM*`, vendor `2e8a`) for the `[hb] …`
 heartbeat. See [CLAUDE.md](CLAUDE.md) for details (the two refresh backends, SWD

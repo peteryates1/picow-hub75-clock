@@ -21,12 +21,14 @@
 // overclocked to 200 MHz for a flicker-free panel (runs fine at the default
 // core voltage on both RP2040 and RP2350; the cycle-based dimming reads the
 // live clock so it self-adjusts). The PIO+DMA backend clocks pixels at a fixed
-// rate independent of clk_sys, so it needs no overclock -- leave the SDK default
-// (0 = don't call set_sys_clock_khz) so the chip runs cool. Override either with
-// -DSYS_CLOCK_KHZ=.
+// rate independent of clk_sys, so it is instead *under*clocked to 100 MHz to run
+// cool/low-power (~1250 fps, unchanged). 100 MHz is the floor: the cyw43
+// wireless stops connecting below ~100 MHz (60 MHz fails), even though the panel
+// itself runs far lower. Override either with -DSYS_CLOCK_KHZ= (0 = leave the
+// SDK default).
 #ifndef SYS_CLOCK_KHZ
 #  ifdef HUB75_PIO
-#    define SYS_CLOCK_KHZ 0
+#    define SYS_CLOCK_KHZ 100000
 #  else
 #    define SYS_CLOCK_KHZ 200000
 #  endif

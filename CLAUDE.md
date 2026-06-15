@@ -21,10 +21,12 @@ schedule otherwise) and controllable over **MQTT** and an on-device **web page**
   5 V supply with a common ground.
 - **Refresh:** the default backend is a **PIO + DMA** RGB shifter (`hub75.pio` +
   the PIO path in `hub75.c`); it clocks pixels at a fixed rate independent of the
-  CPU clock, so the chip runs at the **SDK-default clock** (~1300 fps, no
-  overclock, runs cool). `-DHUB75_PIO=OFF` falls back to the bit-banged loop,
-  which is overclocked to **200 MHz** (`SYS_CLOCK_KHZ`) to stay flicker-free. The
-  loop runs from RAM either way.
+  CPU clock, so the chip is *under*clocked to **100 MHz** (`SYS_CLOCK_KHZ`) to
+  keep the CPU cool/reliable (~1250 fps, unchanged). 100 MHz is the floor — the
+  cyw43 Wi-Fi stops connecting below it (60 MHz fails). core1 also `__wfi()`-
+  sleeps through the OE lit-time rather than spinning. `-DHUB75_PIO=OFF` falls
+  back to the bit-banged loop, which is *over*clocked to **200 MHz** to stay
+  flicker-free. The loop runs from RAM either way.
 - **Network:** static IP `192.168.0.4` (from `network.txt`), MQTT broker at
   `192.168.0.2`, control page at `http://192.168.0.4/`.
 - **Brightness:** day 40 / night 2, 09:00–21:00, sub-µs dimming.
@@ -179,8 +181,11 @@ Same BCM scheme and pin map, two ways to drive it. Both run from RAM
   shifts → garbled/speckled panel; (2) the re-pack must be off core1 — doing it
   on core1 on change blanks the panel for the pack and shows as a ~5 Hz blink.
   The SM runs at a fixed `HUB75_PIO_SM_HZ` (30 MHz, 15 MHz pixel clock)
-  independent of `clk_sys`, so **no overclock is needed** (~1300 fps at the
-  default clock; lower `HUB75_PIO_SM_HZ` if a panel garbles).
+  independent of `clk_sys`, so the CPU is *under*clocked to **100 MHz** (~1250
+  fps; lower `HUB75_PIO_SM_HZ` if a panel garbles). To save CPU heat further,
+  `oe_wait_cycles()` arms core1's **SysTick** for the lit-time and `__wfi()`s
+  instead of busy-waiting. Don't drop `clk_sys` below ~100 MHz: the cyw43
+  wireless stops connecting (the panel itself runs far lower).
 - **Bit-bang (`-DHUB75_PIO=OFF`).** `hub75_refresh_loop` clocks every pixel by
   hand with `gpio_put_masked` + `HUB75_DELAY()`. Simpler, but the refresh rate
   scales with `clk_sys`, so it needs the **200 MHz overclock** to be
